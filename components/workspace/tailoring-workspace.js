@@ -6,6 +6,53 @@ import { buildFinalStructuredResume, getEffectiveSuggestionBullet } from "@/lib/
 import { MetricBar } from "@/components/ui/metric-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
 
+function getDecisionTone(decision) {
+  if (decision === "accepted") {
+    return "success";
+  }
+
+  if (decision === "manual") {
+    return "accent";
+  }
+
+  if (decision === "rejected") {
+    return "neutral";
+  }
+
+  return "neutral";
+}
+
+function getDecisionLabel(decision) {
+  if (decision === "accepted") {
+    return "Accepted";
+  }
+
+  if (decision === "manual") {
+    return "Manual edit";
+  }
+
+  if (decision === "rejected") {
+    return "Original kept";
+  }
+
+  return "Ready for review";
+}
+
+function getActionButtonClass(isActive, emphasis = "secondary") {
+  const baseClass =
+    "inline-flex w-full items-center justify-center rounded-[1.15rem] border px-4 py-3 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(37,99,235,0.22)]";
+
+  if (isActive) {
+    return `${baseClass} border-[rgba(37,99,235,0.28)] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white shadow-[0_16px_34px_rgba(37,99,235,0.2)]`;
+  }
+
+  if (emphasis === "primary") {
+    return `${baseClass} border-[rgba(37,99,235,0.14)] bg-[rgba(37,99,235,0.08)] text-[var(--accent)] hover:bg-[rgba(37,99,235,0.12)]`;
+  }
+
+  return `${baseClass} border-[var(--line-strong)] bg-white/90 text-[var(--ink)] hover:border-[rgba(37,99,235,0.24)] hover:bg-white`;
+}
+
 export function TailoringWorkspace({ session }) {
   const { updateSuggestionDecision, updateManualBullet, copyCurrentResumeSection, exportResume } = useProofFitApp();
   const [selectedSuggestionId, setSelectedSuggestionId] = useState(session.suggestions[0]?.id ?? null);
@@ -206,7 +253,10 @@ export function TailoringWorkspace({ session }) {
                       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{selectedSuggestion.label}</p>
                       <p className="mt-2 text-sm leading-7">{selectedSuggestion.whyItChanged}</p>
                     </div>
-                    <StatusBadge label={`Confidence ${selectedSuggestion.confidenceScore}`} tone="accent" />
+                    <div className="flex flex-col items-end gap-2">
+                      <StatusBadge label={getDecisionLabel(selectedSuggestion.decision)} tone={getDecisionTone(selectedSuggestion.decision)} />
+                      <StatusBadge label={`Confidence ${selectedSuggestion.confidenceScore}`} tone="accent" />
+                    </div>
                   </div>
 
                   <div className="mt-5 space-y-3">
@@ -243,17 +293,37 @@ export function TailoringWorkspace({ session }) {
                     </div>
                   </div>
 
-                  <div className="mt-5 flex flex-wrap gap-3">
-                    <button type="button" className="button-primary" onClick={() => handleDecision("accepted")}>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      className={getActionButtonClass(selectedSuggestion.decision === "accepted", "primary")}
+                      aria-pressed={selectedSuggestion.decision === "accepted"}
+                      onClick={() => handleDecision("accepted")}
+                    >
                       Accept change
                     </button>
-                    <button type="button" className="button-secondary" onClick={() => handleDecision("rejected")}>
+                    <button
+                      type="button"
+                      className={getActionButtonClass(selectedSuggestion.decision === "rejected")}
+                      aria-pressed={selectedSuggestion.decision === "rejected"}
+                      onClick={() => handleDecision("rejected")}
+                    >
                       Reject change
                     </button>
-                    <button type="button" className="button-secondary" onClick={() => handleDecision("manual")}>
+                    <button
+                      type="button"
+                      className={getActionButtonClass(selectedSuggestion.decision === "manual")}
+                      aria-pressed={selectedSuggestion.decision === "manual"}
+                      onClick={() => handleDecision("manual")}
+                    >
                       Edit manually
                     </button>
-                    <button type="button" className="button-secondary" onClick={() => handleDecision("original")}>
+                    <button
+                      type="button"
+                      className={getActionButtonClass(selectedSuggestion.decision === "original")}
+                      aria-pressed={selectedSuggestion.decision === "original"}
+                      onClick={() => handleDecision("original")}
+                    >
                       Restore original
                     </button>
                   </div>

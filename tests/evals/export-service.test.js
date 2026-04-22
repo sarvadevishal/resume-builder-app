@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PDFDocument, StandardFonts } from "pdf-lib";
-import { buildExportSections, wrapTextToWidth } from "@/lib/services/export-service";
+import { buildExportSections, sanitizeText, wrapTextToWidth } from "@/lib/services/export-service";
 
 describe("export service", () => {
   it("maps contact and summary sections to paragraph-style export variants", () => {
@@ -45,5 +45,11 @@ describe("export service", () => {
 
     expect(lines.length).toBeGreaterThan(1);
     expect(lines.join(" ")).toContain("warehouse reliability");
+  });
+
+  it("sanitizes parser artifacts before export formatting", () => {
+    expect(sanitizeText("E ngineered develop ing consumer s insights with odd  spacing .")).toBe(
+      "Engineered developing consumers insights with odd spacing."
+    );
   });
 });
