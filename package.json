@@ -4,9 +4,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint app components lib tests eslint.config.mjs next.config.mjs playwright.config.js proxy.js vitest.config.mjs",
+    "lint": "eslint app components lib tests eslint.config.mjs next.config.mjs playwright.config.js vitest.config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
