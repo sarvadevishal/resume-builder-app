@@ -3,9 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { appNavigation } from "@/lib/constants/navigation";
+import { getWorkflowStepState } from "@/lib/prooffit-state";
+import { useProofFitApp } from "@/components/providers/prooffit-provider";
+
+const orderedSteps = [
+  { key: "hasResume", label: "Resume loaded" },
+  { key: "hasJobDescriptionAnalysis", label: "JD analyzed" },
+  { key: "hasTailoringSession", label: "Tailoring ready" },
+  { key: "hasExport", label: "Final exported" }
+];
 
 export function AppShell({ children, title, description, fullWidth = false }) {
   const pathname = usePathname();
+  const { state, startNewWorkflow } = useProofFitApp();
+  const workflowState = getWorkflowStepState(state);
 
   return (
     <div className={`${fullWidth ? "shell-width max-w-none" : "shell-width"} py-10`}>
@@ -30,6 +41,25 @@ export function AppShell({ children, title, description, fullWidth = false }) {
               );
             })}
           </div>
+
+          <div className="mt-6 rounded-[1.75rem] bg-[var(--surface-muted)] p-4">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Guided progress</p>
+            <div className="mt-3 space-y-2">
+              {orderedSteps.map((step, index) => (
+                <div key={step.key} className="flex items-center gap-3 rounded-[1rem] bg-white/70 px-3 py-3 text-sm font-semibold text-[var(--ink-soft)]">
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs ${
+                      workflowState[step.key] ? "bg-[var(--accent)] text-white" : "bg-[var(--surface-muted)] text-[var(--accent)]"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <span>{step.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
           <div className="mt-6 rounded-[1.75rem] bg-[var(--surface-muted)] p-4">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Operating principles</p>
             <div className="mt-3 space-y-2 text-sm font-medium text-[var(--ink-soft)]">
@@ -48,8 +78,13 @@ export function AppShell({ children, title, description, fullWidth = false }) {
                 <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">{title}</h1>
                 <p className="muted mt-3 max-w-3xl text-sm leading-7 sm:text-base">{description}</p>
               </div>
-              <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--ink-soft)]">
-                Premium workflow
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="button" className="button-secondary" onClick={startNewWorkflow}>
+                  Start new
+                </button>
+                <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--ink-soft)]">
+                  Premium workflow
+                </div>
               </div>
             </div>
           </div>

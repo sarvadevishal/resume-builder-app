@@ -39,9 +39,10 @@ test("sign-up mode works and pricing CTAs are actionable", async ({ page }) => {
   await expect(page.getByText(/Free plan selected successfully/i)).toBeVisible();
 });
 
-test("google continue signs the user in", async ({ page }) => {
-  await signIn(page, { provider: "google" });
-  await expect(page.getByRole("main").getByText("google-user@prooffit.ai", { exact: true })).toBeVisible();
+test("google auth explains configuration requirements when Supabase is not configured", async ({ page }) => {
+  await page.goto("/auth");
+  await expect(page.getByText(/Demo mode is active/i)).toBeVisible();
+  await expect(page.locator("form").getByRole("button", { name: "Continue with Google" })).toBeDisabled();
 });
 
 test("resume upload, JD analysis, workspace, export, settings, and history work together", async ({ page }) => {
@@ -51,10 +52,10 @@ test("resume upload, JD analysis, workspace, export, settings, and history work 
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Choose file" }).click();
   const fileChooser = await fileChooserPromise;
-  await fileChooser.setFiles(path.join(process.cwd(), "tests", "fixtures", "sample-resume.txt"));
+  await fileChooser.setFiles(path.join(process.cwd(), "tests", "fixtures", "sample-resume.pdf"));
   await page.getByRole("button", { name: "Process resume" }).click();
   await expect(page.getByText(/Deletion plan/i)).toBeVisible();
-  await expect(page.getByText(/Experience/i)).toBeVisible();
+  await expect(page.getByText("Experience", { exact: true })).toBeVisible();
 
   await page.getByRole("link", { name: "Continue to JD analysis" }).click();
   await page.getByLabel("Company").fill("QA Data Corp");
@@ -66,7 +67,7 @@ test("resume upload, JD analysis, workspace, export, settings, and history work 
     "Partner with analytics and BI teams"
   ].join("\n"));
   await page.getByRole("button", { name: "Analyze JD" }).click();
-  await expect(page.getByText("Snowflake", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText(/snowflake/i).first()).toBeVisible();
   await page.getByRole("button", { name: "Generate tailoring session" }).click();
   await expect(page.getByRole("heading", { name: "Tailoring workspace" })).toBeVisible();
   await page.getByRole("button", { name: "Accept change" }).click();
@@ -84,6 +85,10 @@ test("resume upload, JD analysis, workspace, export, settings, and history work 
   await page.getByRole("link", { name: /Privacy/i }).first().click();
   await page.getByRole("button", { name: "Clear stored resume data" }).click();
   await expect(page.getByText(/Cleared the stored resume and tailoring session data/i)).toBeVisible();
+
+  await page.getByRole("button", { name: "Start new" }).click();
+  await page.goto("/workspace");
+  await expect(page.getByText(/No tailoring session yet/i)).toBeVisible();
 
   await page.getByRole("link", { name: /History/i }).first().click();
   await expect(page.getByRole("button", { name: "Restore" }).first()).toBeVisible();

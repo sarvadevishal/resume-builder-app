@@ -8,12 +8,13 @@ import { useProofFitApp } from "@/components/providers/prooffit-provider";
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { signIn, state } = useProofFitApp();
+  const { signIn, state, supportsSupabaseAuth, isHydratingAuth, isDemoMode } = useProofFitApp();
   const [mode, setMode] = useState("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [error, setError] = useState(searchParams.get("error") || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nextPath = searchParams.get("next") || "/dashboard";
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -21,8 +22,10 @@ export default function AuthPage() {
     setIsSubmitting(true);
 
     try {
-      await signIn({ email, password, mode });
-      router.push(searchParams.get("next") || "/dashboard");
+      const result = await signIn({ email, password, mode, nextPath });
+      if (!result?.redirecting) {
+        router.push(nextPath);
+      }
     } catch (submissionError) {
       setError(submissionError.message);
     } finally {
@@ -35,16 +38,19 @@ export default function AuthPage() {
     setIsSubmitting(true);
 
     try {
-      await signIn({
-        email: email || "google-user@prooffit.ai",
-        password: "google-session",
+      const result = await signIn({
+        email,
+        password,
         mode: "sign-in",
-        provider: "google"
+        provider: "google",
+        nextPath
       });
-      router.push(searchParams.get("next") || "/dashboard");
+
+      if (!result?.redirecting) {
+        router.push(nextPath);
+      }
     } catch (submissionError) {
       setError(submissionError.message);
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -101,13 +107,24 @@ export default function AuthPage() {
 
             {error ? <p className="rounded-2xl bg-[rgba(190,18,60,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
             {state.authMessage ? <p className="rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{state.authMessage}</p> : null}
+            {isDemoMode ? (
+              <p className="rounded-2xl bg-[rgba(37,99,235,0.08)] px-4 py-3 text-sm font-semibold text-[var(--accent)]">
+                Demo mode is active. Configure Supabase to enable real multi-user password auth and personal Google sign-in.
+              </p>
+            ) : null}
 
             <div className="grid gap-3">
-              <button type="submit" className="button-primary w-full" disabled={isSubmitting}>
+              <button type="submit" className="button-primary w-full" disabled={isSubmitting || isHydratingAuth}>
                 {isSubmitting ? "Working..." : mode === "sign-in" ? "Sign in" : "Create account"}
               </button>
 
-              <button type="button" className="button-secondary w-full" onClick={handleGoogleContinue} disabled={isSubmitting}>
+              <button
+                type="button"
+                className="button-secondary w-full"
+                onClick={handleGoogleContinue}
+                disabled={isSubmitting || isHydratingAuth || !supportsSupabaseAuth}
+                title={!supportsSupabaseAuth ? "Configure Supabase and Google auth to enable this." : "Continue with Google"}
+              >
                 Continue with Google
               </button>
             </div>

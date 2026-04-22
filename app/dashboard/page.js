@@ -21,22 +21,28 @@ export default function DashboardPage() {
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             <div className="stat-card">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Company</p>
-              <p className="mt-3 text-2xl font-semibold">{activeSession?.company || state.jobDescription.company}</p>
+              <p className="mt-3 text-2xl font-semibold">{activeSession?.company || state.jobDescription.company || "Start with a target company"}</p>
             </div>
             <div className="stat-card">
               <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Role</p>
-              <p className="mt-3 text-2xl font-semibold">{activeSession?.role || state.jobDescription.role}</p>
+              <p className="mt-3 text-2xl font-semibold">{activeSession?.role || state.jobDescription.role || "Choose a target role"}</p>
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {(activeSession?.scores || []).slice(0, 3).map((score) => (
-              <div key={score.id} className="stat-card">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{score.label}</p>
-                <p className="mt-3 text-3xl font-semibold">{score.score}</p>
-              </div>
-            ))}
-          </div>
+          {(activeSession?.scores || []).length ? (
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              {(activeSession?.scores || []).slice(0, 3).map((score) => (
+                <div key={score.id} className="stat-card">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{score.label}</p>
+                  <p className="mt-3 text-3xl font-semibold">{score.score}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--line)] bg-white/80 px-5 py-6 text-sm font-semibold text-[var(--ink-soft)]">
+              Upload a resume and analyze a real job description to generate the first proof-backed score breakdown.
+            </div>
+          )}
         </SectionCard>
 
         <div className="space-y-6">

@@ -10,27 +10,33 @@ export default function HistoryPage() {
   return (
     <AppShell title="Version history" description="Track tailored resumes by company and role, compare exports, and restore earlier versions without losing provenance.">
       <SectionCard title="Saved resume versions" eyebrow="History">
-        <div className="mt-6 space-y-4">
-          {state.versionHistory.map((version) => (
-            <div key={version.id} className="grid gap-4 rounded-[1.75rem] border border-[var(--line)] bg-white/90 p-5 md:grid-cols-[1.2fr_0.8fr_0.6fr]">
-              <div>
-                <p className="text-lg font-semibold">{version.company}</p>
-                <p className="muted mt-1 text-sm">{version.role}</p>
+        {state.versionHistory.length ? (
+          <div className="mt-6 space-y-4">
+            {state.versionHistory.map((version) => (
+              <div key={version.id} className="grid gap-4 rounded-[1.75rem] border border-[var(--line)] bg-white/90 p-5 md:grid-cols-[1.2fr_0.8fr_0.6fr]">
+                <div>
+                  <p className="text-lg font-semibold">{version.company}</p>
+                  <p className="muted mt-1 text-sm">{version.role}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Accepted changes</p>
+                  <p className="muted mt-2 text-sm">{version.acceptedChanges} accepted edits</p>
+                </div>
+                <div className="text-left md:text-right">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Updated</p>
+                  <p className="muted mt-2 text-sm">{version.updatedAt}</p>
+                  <button type="button" className="button-secondary mt-3" onClick={() => restoreVersion(version.id)}>
+                    Restore
+                  </button>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Accepted changes</p>
-                <p className="muted mt-2 text-sm">{version.acceptedChanges} accepted edits</p>
-              </div>
-              <div className="text-left md:text-right">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Updated</p>
-                <p className="muted mt-2 text-sm">{version.updatedAt}</p>
-                <button type="button" className="button-secondary mt-3" onClick={() => restoreVersion(version.id)}>
-                  Restore
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--line)] bg-white/80 px-5 py-6 text-sm font-semibold text-[var(--ink-soft)]">
+            Export a tailored resume to create the first saved version for this user.
+          </div>
+        )}
       </SectionCard>
     </AppShell>
   );

@@ -19,3 +19,5 @@ The fastest way for data professionals to create truthful, ATS-safe, job-specifi
 - Support future enhancements without rewriting the data model
 - Keep PDF and DOCX export reliability high, especially line wrapping and ATS-safe document flow
 - Maintain a premium enterprise visual language while keeping functionality ahead of decorative UI
+- Preserve signed-in workflow state and version history across refreshes for each user
+- Keep clear separation between `Start new`, `Clear stored resume data`, and `Clear saved versions`

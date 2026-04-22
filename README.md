@@ -138,6 +138,15 @@ You only need real external credentials when you want to connect:
 - OpenAI live model responses
 - Stripe checkout and billing
 
+Demo-mode behavior to know:
+
+- local password sign-in is for testing only
+- Google sign-in is intentionally disabled until Supabase is configured
+- workflow progress and version history now persist per signed-in test user in the browser
+- `Start new` clears the active tailoring flow but keeps saved versions
+- `Clear stored resume data` removes the active resume, JD, and tailoring session
+- `Clear saved versions` removes version history for the current signed-in user
+
 ## Verification commands
 
 Run all quality checks before shipping changes:
@@ -148,6 +157,104 @@ npm test
 npm run test:e2e
 npm run build
 ```
+
+## Production configuration checklist
+
+Configure these before shipping to real testers:
+
+1. Supabase
+2. Google OAuth inside Supabase
+3. OpenAI API key
+4. Stripe prices and webhook
+5. Deployment URL updates
+
+### Supabase
+
+1. Create a new Supabase project
+2. Run `supabase/migrations/202604210001_prooffit_ai.sql`
+3. Optionally run `supabase/seed.sql`
+4. Add these values to `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+5. In Supabase Authentication, enable Email auth if you want password sign-in
+6. Add your local and deployed callback URLs:
+   - `http://localhost:3000/auth/callback`
+   - `https://your-domain.com/auth/callback`
+
+### Google sign-in
+
+1. Create a Google OAuth client in Google Cloud
+2. Add the authorized redirect URL from Supabase
+3. In Supabase Authentication > Providers, enable Google
+4. Paste the Google client ID and secret into Supabase
+5. Restart the app after updating `.env.local`
+
+After that, users can sign in with their own personal Gmail or Google Workspace accounts. The hardcoded demo Google user has been removed.
+
+### OpenAI
+
+```env
+OPENAI_API_KEY=your-openai-key
+OPENAI_MODEL=gpt-5
+```
+
+### Stripe
+
+```env
+STRIPE_SECRET_KEY=your-stripe-secret
+STRIPE_WEBHOOK_SECRET=your-webhook-secret
+NEXT_PUBLIC_STRIPE_PRICE_PRO=price_xxx
+NEXT_PUBLIC_STRIPE_PRICE_TEAM=price_xxx
+```
+
+## Real workflow verification
+
+Use this exact path when validating with a real user resume and a real JD:
+
+```mermaid
+flowchart TD
+    A["Sign in"] --> B["Upload PDF or DOCX"]
+    B --> C["Process resume"]
+    C --> D{"Structured sections visible?"}
+    D -->|No| E["Check upload error and parser output"]
+    D -->|Yes| F["Continue to JD analysis"]
+    F --> G["Paste company, role, and job description"]
+    G --> H["Analyze JD"]
+    H --> I{"Must-have skills and gaps visible?"}
+    I -->|No| J["Review JD text and analysis route"]
+    I -->|Yes| K["Generate tailoring session"]
+    K --> L["Accept, reject, or manually edit suggestions"]
+    L --> M["Export PDF or DOCX"]
+    M --> N["Open ATS preview and history"]
+```
+
+Expected result:
+
+- upload succeeds without `Resume upload failed`
+- extracted sections appear on the upload page
+- JD requirements and unsupported gaps appear on the analysis page
+- the workspace shows proof-backed rewrites with evidence
+- PDF and DOCX export complete successfully
+- history retains saved versions for the signed-in user
+
+Detailed tester checklist:
+
+1. Sign in with email/password in demo mode, or with real Supabase auth after configuration
+2. Upload one PDF resume and confirm the structured preview appears
+3. Paste one job description and confirm must-have skills and gaps are shown
+4. Generate a tailoring session and accept at least one change
+5. Export PDF and DOCX
+6. Open `ATS Preview` and confirm parser warnings render
+7. Open `History` and confirm a saved version exists
+8. Open `Settings` and test:
+   - `Clear stored resume data`
+   - `Start new`
+   - `Clear saved versions`
 
 ## Main routes
 
@@ -216,6 +323,7 @@ This repository currently ships with a strong local demo workflow plus productio
 - [Prompt design](./PROMPT_DESIGN.md)
 - [Evaluation plan](./EVALUATION_PLAN.md)
 - [MVP roadmap](./MVP_ROADMAP.md)
+- [Verification flow](./docs/verification-flow.md)
 - [Product memory](./context/product-memory.md)
 - [Technical memory](./context/technical-memory.md)
 - [Future enhancements](./context/future-enhancements.md)
@@ -223,8 +331,8 @@ This repository currently ships with a strong local demo workflow plus productio
 ## Recommended next steps
 
 1. Connect Supabase auth and row-level security to live sessions
-2. Replace local demo auth with real Supabase password and Google OAuth flows
-3. Persist tailoring sessions and version history in the database
-4. Wire live OpenAI generation for extraction, analysis, and rewrite steps
-5. Wire live Stripe checkout and subscription sync
-6. Add deployment configuration for Vercel or your preferred hosting platform
+2. Persist tailoring sessions and version history in the database
+3. Wire live OpenAI generation for extraction, analysis, and rewrite steps
+4. Wire live Stripe checkout and subscription sync
+5. Add deployment configuration for Vercel or your preferred hosting platform
+6. Add production telemetry and error monitoring before broad user rollout

@@ -6,7 +6,7 @@ import { SectionCard } from "@/components/ui/section-card";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
 
 export default function SettingsPage() {
-  const { state, updatePrivacyPreferences, clearResumeData } = useProofFitApp();
+  const { state, updatePrivacyPreferences, clearResumeData, clearSavedHistory } = useProofFitApp();
   const [statusMessage, setStatusMessage] = useState("");
   const preferenceItems = [
     {
@@ -28,6 +28,11 @@ export default function SettingsPage() {
     setStatusMessage("Cleared the stored resume and tailoring session data.");
   }
 
+  function handleClearHistory() {
+    clearSavedHistory();
+    setStatusMessage("Cleared saved version history for this user.");
+  }
+
   return (
     <AppShell title="Settings and privacy" description="Control structured data retention, delete uploads, and review audit events without hunting through hidden menus.">
       <div className="grid gap-6 xl:grid-cols-2">
@@ -47,6 +52,9 @@ export default function SettingsPage() {
           <div className="mt-6 flex flex-wrap gap-3">
             <button type="button" className="button-secondary" onClick={handleClearData}>
               Clear stored resume data
+            </button>
+            <button type="button" className="button-secondary" onClick={handleClearHistory}>
+              Clear saved versions
             </button>
             {statusMessage ? (
               <span className="rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">

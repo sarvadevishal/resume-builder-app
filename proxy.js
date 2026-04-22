@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { getSupabasePublishableKey, getSupabaseUrl, isSupabaseConfigured } from "@/lib/services/supabase/config";
 
 const protectedPaths = [
   "/dashboard",
@@ -16,17 +18,55 @@ const protectedPaths = [
   "/api/privacy/delete"
 ];
 
-export function proxy(request) {
+async function getAuthenticatedUser(request) {
+  if (!isSupabaseConfigured()) {
+    const marker = request.cookies.get("prooffit_demo_session")?.value;
+    return marker ? { email: marker } : null;
+  }
+
+  let response = NextResponse.next({
+    request
+  });
+
+  const supabase = createServerClient(getSupabaseUrl(), getSupabasePublishableKey(), {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll().map((cookie) => ({
+          name: cookie.name,
+          value: cookie.value
+        }));
+      },
+      setAll(cookiesToSet, headers) {
+        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        response = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) => response.cookies.set(name, value, options));
+        Object.entries(headers).forEach(([key, value]) => response.headers.set(key, value));
+      }
+    }
+  });
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  return {
+    user,
+    response
+  };
+}
+
+export async function proxy(request) {
   const isProtected = protectedPaths.some((path) => request.nextUrl.pathname.startsWith(path));
 
   if (!isProtected) {
     return NextResponse.next();
   }
 
-  const hasSession = Boolean(request.cookies.get("prooffit_demo_session")?.value);
+  const authResult = await getAuthenticatedUser(request);
+  const hasSession = isSupabaseConfigured() ? Boolean(authResult.user) : Boolean(authResult?.email);
 
   if (hasSession) {
-    return NextResponse.next();
+    return isSupabaseConfigured() ? authResult.response : NextResponse.next();
   }
 
   if (request.nextUrl.pathname.startsWith("/api/")) {

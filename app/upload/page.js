@@ -7,13 +7,24 @@ import { SectionCard } from "@/components/ui/section-card";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
 
 export default function UploadPage() {
-  const { state, uploadResume } = useProofFitApp();
+  const { state, uploadResume, clearResumeData } = useProofFitApp();
   const [resumeText, setResumeText] = useState(state.resumeUpload.extractedText);
   const [selectedFile, setSelectedFile] = useState(null);
   const [saveStructuredData, setSaveStructuredData] = useState(state.privacyPreferences.saveStructuredResume);
   const [error, setError] = useState("");
+  const [statusMessage, setStatusMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
+
+  function resetLocalInputs() {
+    setSelectedFile(null);
+    setResumeText("");
+    setError("");
+    setStatusMessage("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
 
   async function handleUpload() {
     if (!selectedFile && !resumeText.trim()) {
@@ -25,16 +36,23 @@ export default function UploadPage() {
     setIsUploading(true);
 
     try {
-      await uploadResume({
+      const result = await uploadResume({
         file: selectedFile,
         text: resumeText,
         saveStructuredData
       });
+      setStatusMessage(`Resume processed successfully with ${result.structuredResume.sections.length} detected sections.`);
     } catch (uploadError) {
       setError(uploadError.message);
     } finally {
       setIsUploading(false);
     }
+  }
+
+  async function handleClearAll() {
+    await clearResumeData();
+    resetLocalInputs();
+    setStatusMessage("Cleared the current upload and extracted resume data.");
   }
 
   return (
@@ -51,9 +69,14 @@ export default function UploadPage() {
               className="hidden"
               onChange={(event) => setSelectedFile(event.target.files?.[0] ?? null)}
             />
-            <button type="button" className="button-primary mt-6" onClick={() => fileInputRef.current?.click()}>
-              Choose file
-            </button>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button type="button" className="button-primary" onClick={() => fileInputRef.current?.click()}>
+                Choose file
+              </button>
+              <button type="button" className="button-secondary" onClick={resetLocalInputs}>
+                Clear fields
+              </button>
+            </div>
             {selectedFile ? <p className="mt-3 text-sm font-semibold">{selectedFile.name}</p> : null}
           </div>
 
@@ -74,12 +97,20 @@ export default function UploadPage() {
           </label>
 
           {error ? <p className="mt-4 rounded-2xl bg-[rgba(190,18,60,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
+          {statusMessage ? <p className="mt-4 rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{statusMessage}</p> : null}
 
           <div className="mt-4 flex flex-wrap gap-3">
             <button type="button" className="button-primary" onClick={handleUpload} disabled={isUploading}>
               {isUploading ? "Processing..." : "Process resume"}
             </button>
-            <Link href="/job-analysis" className="button-secondary">
+            <button type="button" className="button-secondary" onClick={handleClearAll}>
+              Clear current upload
+            </button>
+            <Link
+              href={state.resumeUpload.structuredResume ? "/job-analysis" : "#"}
+              className={`button-secondary ${state.resumeUpload.structuredResume ? "" : "pointer-events-none opacity-60"}`}
+              aria-disabled={!state.resumeUpload.structuredResume}
+            >
               Continue to JD analysis
             </Link>
           </div>
@@ -102,14 +133,20 @@ export default function UploadPage() {
 
         <div className="space-y-6">
           <SectionCard title="Extracted structure preview" eyebrow="Step 2">
-            <div className="mt-6 space-y-4">
-              {(state.resumeUpload.structuredResume?.sections || []).map((section) => (
-                <div key={section.name} className="info-tile">
-                  <p className="font-semibold">{section.name}</p>
-                  <p className="muted mt-1 text-sm">{section.items.length} items detected</p>
-                </div>
-              ))}
-            </div>
+            {(state.resumeUpload.structuredResume?.sections || []).length ? (
+              <div className="mt-6 space-y-4">
+                {(state.resumeUpload.structuredResume?.sections || []).map((section) => (
+                  <div key={section.name} className="info-tile">
+                    <p className="font-semibold">{section.name}</p>
+                    <p className="muted mt-1 text-sm">{section.items.length} items detected</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--line)] bg-white/80 px-5 py-6 text-sm font-semibold text-[var(--ink-soft)]">
+                Upload a resume or paste text to see the structured preview here.
+              </div>
+            )}
 
             {state.resumeUpload.deletionPlan ? (
               <div className="mt-6 rounded-[1.5rem] bg-[var(--surface-muted)] p-5">
