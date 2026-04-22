@@ -17,3 +17,5 @@ The fastest way for data professionals to create truthful, ATS-safe, job-specifi
 - Build a clean App Router web app with modular AI services
 - Keep privacy, transparency, and explanation surfaces visible throughout the workflow
 - Support future enhancements without rewriting the data model
+- Keep PDF and DOCX export reliability high, especially line wrapping and ATS-safe document flow
+- Maintain a premium enterprise visual language while keeping functionality ahead of decorative UI

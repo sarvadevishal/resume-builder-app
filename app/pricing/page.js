@@ -51,15 +51,22 @@ export default function PricingPage() {
           ProofFit AI shows users meaningful tailoring results before asking them to pay. The Pro tier unlocks unlimited tailoring, export-ready output, and version history.
         </p>
         <p className="mt-4 text-sm font-semibold text-[var(--accent)]">Current plan: {state.currentPlan}</p>
-        {statusMessage ? <p className="mt-4 rounded-2xl bg-[rgba(45,106,79,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{statusMessage}</p> : null}
+        {statusMessage ? <p className="mt-4 rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{statusMessage}</p> : null}
       </div>
+
       <div className="mt-12 grid gap-6 lg:grid-cols-3">
-        {plans.map((plan) => (
-          <SectionCard key={plan.name} title={plan.name} eyebrow={plan.price}>
+        {plans.map((plan, index) => (
+          <SectionCard
+            key={plan.name}
+            title={plan.name}
+            eyebrow={plan.price}
+            className={index === 1 ? "relative overflow-hidden ring-1 ring-[rgba(37,99,235,0.24)]" : ""}
+          >
+            {index === 1 ? <span className="absolute right-6 top-6 rounded-full bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Most popular</span> : null}
             <p className="muted mt-4 text-sm leading-7">{plan.description}</p>
             <div className="mt-6 space-y-3">
               {plan.features.map((feature) => (
-                <div key={feature} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold">
+                <div key={feature} className="info-tile text-sm font-semibold">
                   {feature}
                 </div>
               ))}

@@ -21,6 +21,11 @@ function appendAuditEvent(state, message) {
   ].slice(0, 20);
 }
 
+function slugifyFragment(value, fallback) {
+  const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return normalized || fallback;
+}
+
 export function ProofFitProvider({ children }) {
   const [state, setState] = useState(createDefaultState);
 
@@ -244,7 +249,7 @@ export function ProofFitProvider({ children }) {
     const objectUrl = window.URL.createObjectURL(blob);
     const downloadLink = document.createElement("a");
     downloadLink.href = objectUrl;
-    downloadLink.download = `prooffit-${state.jobDescription.company.replace(/\s+/g, "-").toLowerCase()}-${state.jobDescription.role.replace(/\s+/g, "-").toLowerCase()}.${extension}`;
+    downloadLink.download = `prooffit-${slugifyFragment(state.jobDescription.company, "target-company")}-${slugifyFragment(state.jobDescription.role, "target-role")}.${extension}`;
     document.body.appendChild(downloadLink);
     downloadLink.click();
     downloadLink.remove();
@@ -269,7 +274,21 @@ export function ProofFitProvider({ children }) {
       throw new Error("No tailored experience section is available to copy.");
     }
 
-    await navigator.clipboard.writeText(experienceSection.items.join("\n"));
+    const textToCopy = experienceSection.items.join("\n");
+
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(textToCopy);
+    } else {
+      const fallbackElement = document.createElement("textarea");
+      fallbackElement.value = textToCopy;
+      fallbackElement.setAttribute("readonly", "true");
+      fallbackElement.style.position = "absolute";
+      fallbackElement.style.left = "-9999px";
+      document.body.appendChild(fallbackElement);
+      fallbackElement.select();
+      document.execCommand("copy");
+      fallbackElement.remove();
+    }
 
     setState((current) => ({
       ...current,

@@ -10,10 +10,7 @@ const metrics = [
 
 export default function AdminPage() {
   return (
-    <AppShell
-      title="Admin analytics"
-      description="Track trust, quality, and monetization signals with product-specific metrics instead of vanity dashboards."
-    >
+    <AppShell title="Admin analytics" description="Track trust, quality, and monetization signals with product-specific metrics instead of vanity dashboards.">
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {metrics.map((metric) => (
           <SectionCard key={metric.label} title={metric.value} eyebrow={metric.label} />
@@ -27,7 +24,7 @@ export default function AdminPage() {
               "User-reported unsupported edit rate",
               "Average gap-analysis usefulness score"
             ].map((item) => (
-              <div key={item} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold">
+              <div key={item} className="info-tile text-sm font-semibold">
                 {item}
               </div>
             ))}
@@ -40,7 +37,7 @@ export default function AdminPage() {
               "Active users with version history enabled",
               "Team tier placeholder and waitlist count"
             ].map((item) => (
-              <div key={item} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold">
+              <div key={item} className="info-tile text-sm font-semibold">
                 {item}
               </div>
             ))}

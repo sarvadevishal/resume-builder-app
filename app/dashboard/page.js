@@ -10,26 +10,28 @@ export default function DashboardPage() {
   const activeSession = state.tailoringSession;
 
   return (
-    <AppShell title="Dashboard" description="Pick up where you left off, compare versions, and keep each target role grounded in evidence.">
+    <AppShell title="Dashboard" description="Pick up where you left off, compare versions, and keep every target role grounded in evidence instead of guesswork.">
       <div className="grid gap-6 xl:grid-cols-3">
         <SectionCard title="Recent tailoring session" eyebrow="In progress" className="xl:col-span-2">
-          <div className="mt-6 rounded-3xl border border-[var(--line)] bg-white p-5">
+          <div className="mt-6 rounded-[1.75rem] border border-[var(--line)] bg-white/90 p-5">
             <p className="text-sm text-[var(--ink-soft)]">Signed in as</p>
             <p className="mt-2 text-2xl font-semibold">{state.currentUser?.email}</p>
           </div>
+
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
-              <p className="text-sm text-[var(--ink-soft)]">Company</p>
-              <p className="mt-2 text-2xl font-semibold">{activeSession?.company || state.jobDescription.company}</p>
+            <div className="stat-card">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Company</p>
+              <p className="mt-3 text-2xl font-semibold">{activeSession?.company || state.jobDescription.company}</p>
             </div>
-            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
-              <p className="text-sm text-[var(--ink-soft)]">Role</p>
-              <p className="mt-2 text-2xl font-semibold">{activeSession?.role || state.jobDescription.role}</p>
+            <div className="stat-card">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Role</p>
+              <p className="mt-3 text-2xl font-semibold">{activeSession?.role || state.jobDescription.role}</p>
             </div>
           </div>
+
           <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {(activeSession?.scores || []).map((score) => (
-              <div key={score.id} className="rounded-3xl bg-[var(--surface-muted)] p-5">
+            {(activeSession?.scores || []).slice(0, 3).map((score) => (
+              <div key={score.id} className="stat-card">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{score.label}</p>
                 <p className="mt-3 text-3xl font-semibold">{score.score}</p>
               </div>
@@ -37,20 +39,23 @@ export default function DashboardPage() {
           </div>
         </SectionCard>
 
-        <SectionCard title="Plan snapshot" eyebrow="Current plan">
-          <div className="mt-6 space-y-3">
-            {[
-              `Current plan: ${state.currentPlan}`,
-              "Free tier: 3 tailoring sessions",
-              "Meaningful preview unlocked before checkout",
-              "Pro unlocks exports, history, and unlimited sessions"
-            ].map((item) => (
-              <div key={item} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold">
-                {item}
-              </div>
-            ))}
+        <div className="space-y-6">
+          <div className="premium-panel-dark">
+            <p className="text-sm uppercase tracking-[0.2em] text-white/60">Current plan</p>
+            <p className="mt-3 text-3xl font-semibold capitalize">{state.currentPlan}</p>
+            <div className="mt-6 space-y-3">
+              {[
+                "Free tier includes 3 tailoring sessions",
+                "Meaningful preview unlocked before checkout",
+                "Pro unlocks exports, history, and unlimited sessions"
+              ].map((item) => (
+                <div key={item} className="rounded-[1.3rem] border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold">
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
-        </SectionCard>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 xl:grid-cols-2">
@@ -61,7 +66,7 @@ export default function DashboardPage() {
               state.jobDescription.analysis ? "Job description analyzed" : "Job description still needed",
               activeSession ? "Tailoring session ready" : "Tailoring session not generated yet"
             ].map((item) => (
-              <div key={item} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm font-semibold">
+              <div key={item} className="info-tile text-sm font-semibold">
                 {item}
               </div>
             ))}
@@ -82,7 +87,7 @@ export default function DashboardPage() {
         <SectionCard title="Recent audit events" eyebrow="Traceability">
           <div className="mt-6 space-y-3">
             {(state.auditEvents.length ? state.auditEvents : [{ id: "empty", message: "No local audit events yet.", createdAt: "Just now" }]).map((item) => (
-              <div key={item.id} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3">
+              <div key={item.id} className="info-tile">
                 <p className="text-sm font-semibold">{item.message}</p>
                 <p className="muted mt-1 text-xs">{item.createdAt}</p>
               </div>

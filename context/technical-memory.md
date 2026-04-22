@@ -16,3 +16,4 @@
 - Keep deterministic workflow logic in `lib/services`
 - Store durable schema and sample records in `supabase/`
 - Treat export generation as a server concern
+- Preserve ATS-safe export heuristics in deterministic code, including line wrapping, section formatting, and parser-risk checks

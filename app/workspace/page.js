@@ -17,7 +17,7 @@ export default function WorkspacePage() {
       {state.tailoringSession ? (
         <TailoringWorkspace key={state.tailoringSession.id} session={state.tailoringSession} />
       ) : (
-        <div className="surface rounded-[2rem] p-8">
+        <div className="premium-panel">
           <p className="text-2xl font-semibold">No tailoring session yet</p>
           <p className="muted mt-4 max-w-2xl text-sm leading-7">
             Upload a resume and analyze a job description first, then generate a tailoring session so the workspace has real suggestions to review.

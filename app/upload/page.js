@@ -38,10 +38,10 @@ export default function UploadPage() {
   }
 
   return (
-    <AppShell title="Resume upload" description="Import PDF or DOCX, extract structured sections, and decide whether to keep the original file after processing.">
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+    <AppShell title="Resume upload" description="Import a PDF or DOCX, extract structured sections, and decide whether the original file should survive the session.">
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <SectionCard title="Upload source resume" eyebrow="Step 1">
-          <div className="mt-6 rounded-[2rem] border border-dashed border-[var(--line-strong)] bg-white/90 p-8 text-center">
+          <div className="mt-6 rounded-[2rem] border border-dashed border-[rgba(37,99,235,0.28)] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(239,246,255,0.9))] p-8 text-center">
             <p className="text-lg font-semibold">Drop a PDF or DOCX file here</p>
             <p className="muted mt-3 text-sm">Raw files are deleted after extraction by default unless the user opts in to save them.</p>
             <input
@@ -63,21 +63,17 @@ export default function UploadPage() {
               id="resume-text"
               value={resumeText}
               onChange={(event) => setResumeText(event.target.value)}
-              className="min-h-56 w-full rounded-[1.5rem] border border-[var(--line)] bg-white px-4 py-4 outline-none"
+              className="textarea-field min-h-56"
               placeholder="Paste a plain-text resume here if you want to test the parser without a file upload."
             />
           </label>
 
-          <label className="mt-4 flex items-center gap-3 rounded-2xl border border-[var(--line)] bg-white px-4 py-3">
-            <input
-              type="checkbox"
-              checked={saveStructuredData}
-              onChange={(event) => setSaveStructuredData(event.target.checked)}
-            />
+          <label className="mt-4 flex items-center gap-3 rounded-[1.3rem] border border-[var(--line)] bg-white/90 px-4 py-3">
+            <input type="checkbox" checked={saveStructuredData} onChange={(event) => setSaveStructuredData(event.target.checked)} />
             <span className="text-sm font-semibold">Keep structured resume data after this session</span>
           </label>
 
-          {error ? <p className="mt-4 rounded-2xl bg-[rgba(182,59,47,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
+          {error ? <p className="mt-4 rounded-2xl bg-[rgba(190,18,60,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
 
           <div className="mt-4 flex flex-wrap gap-3">
             <button type="button" className="button-primary" onClick={handleUpload} disabled={isUploading}>
@@ -89,38 +85,55 @@ export default function UploadPage() {
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
-              <p className="text-sm font-semibold">Consent controls</p>
-              <p className="muted mt-2 text-sm leading-7">
+            <div className="stat-card">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Consent controls</p>
+              <p className="muted mt-3 text-sm leading-7">
                 Users must explicitly opt in before structured resume data is stored beyond the current session.
               </p>
             </div>
-            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
-              <p className="text-sm font-semibold">Audit trail</p>
-              <p className="muted mt-2 text-sm leading-7">
+            <div className="stat-card">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Audit trail</p>
+              <p className="muted mt-3 text-sm leading-7">
                 Every upload, extraction, deletion, and export event is written to the audit log.
               </p>
             </div>
           </div>
         </SectionCard>
 
-        <SectionCard title="Extracted structure preview" eyebrow="Step 2">
-          <div className="mt-6 space-y-4">
-            {(state.resumeUpload.structuredResume?.sections || []).map((section) => (
-              <div key={section.name} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3">
-                <p className="font-semibold">{section.name}</p>
-                <p className="muted mt-1 text-sm">{section.items.length} items detected</p>
-              </div>
-            ))}
-          </div>
-
-          {state.resumeUpload.deletionPlan ? (
-            <div className="mt-6 rounded-3xl bg-[var(--surface-muted)] p-5">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Deletion plan</p>
-              <p className="mt-3 text-sm leading-7">{state.resumeUpload.deletionPlan.message}</p>
+        <div className="space-y-6">
+          <SectionCard title="Extracted structure preview" eyebrow="Step 2">
+            <div className="mt-6 space-y-4">
+              {(state.resumeUpload.structuredResume?.sections || []).map((section) => (
+                <div key={section.name} className="info-tile">
+                  <p className="font-semibold">{section.name}</p>
+                  <p className="muted mt-1 text-sm">{section.items.length} items detected</p>
+                </div>
+              ))}
             </div>
-          ) : null}
-        </SectionCard>
+
+            {state.resumeUpload.deletionPlan ? (
+              <div className="mt-6 rounded-[1.5rem] bg-[var(--surface-muted)] p-5">
+                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Deletion plan</p>
+                <p className="mt-3 text-sm leading-7">{state.resumeUpload.deletionPlan.message}</p>
+              </div>
+            ) : null}
+          </SectionCard>
+
+          <div className="premium-panel-dark">
+            <p className="text-sm uppercase tracking-[0.2em] text-white/60">Upload promise</p>
+            <div className="mt-5 space-y-3">
+              {[
+                "No hidden paywall before a meaningful result",
+                "Structured extraction stays reviewable",
+                "Privacy choices stay visible during import"
+              ].map((item) => (
+                <div key={item} className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </AppShell>
   );

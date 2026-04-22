@@ -22,7 +22,8 @@ ProofFit AI starts with data professionals:
 ## UX tone
 
 - Premium, calm, precise
-- White and neutral palette
+- White and premium enterprise palette with restrained blue accents
 - Strong typography hierarchy
 - Minimal clutter
 - Human, trustworthy writing
+- Workspace should feel credible, high-end, and built for serious job seekers rather than generic AI output

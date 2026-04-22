@@ -3,20 +3,24 @@
 :root {
   --font-heading: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --font-body: "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
-  --background: #f7f4ee;
-  --surface: rgba(255, 255, 255, 0.84);
+  --background: #f4f7fb;
+  --background-strong: #eef3fb;
+  --surface: rgba(255, 255, 255, 0.82);
   --surface-strong: #ffffff;
-  --surface-muted: #efe8dc;
-  --ink: #14110f;
-  --ink-soft: #5a534d;
-  --line: rgba(20, 17, 15, 0.1);
-  --line-strong: rgba(20, 17, 15, 0.18);
-  --accent: #9b6a35;
-  --accent-soft: #efe2d2;
-  --success: #2d6a4f;
-  --warning: #b7791f;
-  --danger: #b63b2f;
-  --shadow: 0 24px 80px rgba(28, 23, 18, 0.08);
+  --surface-muted: #eef4ff;
+  --surface-accent: #eff6ff;
+  --ink: #0f172a;
+  --ink-soft: #546174;
+  --line: rgba(15, 23, 42, 0.08);
+  --line-strong: rgba(37, 99, 235, 0.18);
+  --accent: #2563eb;
+  --accent-strong: #1d4ed8;
+  --accent-soft: rgba(37, 99, 235, 0.1);
+  --success: #0f766e;
+  --warning: #b45309;
+  --danger: #be123c;
+  --shadow: 0 26px 80px rgba(15, 23, 42, 0.08);
+  --shadow-strong: 0 34px 90px rgba(37, 99, 235, 0.12);
 }
 
 * {
@@ -30,9 +34,11 @@ html {
 body {
   font-family: var(--font-body), sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(155, 106, 53, 0.1), transparent 28%),
-    radial-gradient(circle at top right, rgba(129, 140, 248, 0.07), transparent 24%),
-    linear-gradient(180deg, #fbfaf7 0%, #f7f4ee 100%);
+    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 28%),
+    radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 24%),
+    radial-gradient(circle at bottom center, rgba(15, 118, 110, 0.08), transparent 26%),
+    linear-gradient(180deg, #fbfdff 0%, var(--background) 100%);
+  color: var(--ink);
 }
 
 h1,
@@ -42,6 +48,7 @@ h4,
 h5,
 h6 {
   font-family: var(--font-heading), serif;
+  letter-spacing: -0.02em;
 }
 
 a {
@@ -56,31 +63,42 @@ select {
   font: inherit;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--ink-soft) 72%, white);
+}
+
 .shell-width {
   @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
 }
 
 .surface {
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.7);
   box-shadow: var(--shadow);
   backdrop-filter: blur(18px);
 }
 
 .surface-strong {
-  background: var(--surface-strong);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.92));
   border: 1px solid var(--line);
+  box-shadow: var(--shadow);
 }
 
 .eyebrow {
-  @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.22em];
-  border-color: rgba(155, 106, 53, 0.2);
+  @apply inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em];
+  border-color: rgba(37, 99, 235, 0.14);
   color: var(--accent);
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(255, 255, 255, 0.78);
 }
 
 .page-title {
-  @apply text-4xl leading-tight sm:text-5xl;
+  @apply text-4xl leading-[1.02] sm:text-5xl lg:text-6xl;
 }
 
 .section-title {
@@ -92,23 +110,90 @@ select {
 }
 
 .button-primary {
-  @apply inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-semibold transition;
-  background: var(--ink);
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition;
   color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.24);
 }
 
 .button-primary:hover {
   transform: translateY(-1px);
+  box-shadow: 0 22px 40px rgba(37, 99, 235, 0.28);
 }
 
 .button-secondary {
-  @apply inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition;
+  @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold transition;
   border-color: var(--line-strong);
-  background: rgba(255, 255, 255, 0.7);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.82);
 }
 
 .button-secondary:hover {
   background: white;
+  border-color: rgba(37, 99, 235, 0.24);
+}
+
+.button-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition;
+  color: var(--accent);
+  background: rgba(37, 99, 235, 0.08);
+}
+
+.button-ghost:hover {
+  background: rgba(37, 99, 235, 0.14);
+}
+
+.input-field,
+.textarea-field,
+.select-field {
+  @apply w-full rounded-[1.35rem] border px-4 py-3 outline-none transition;
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.textarea-field {
+  @apply py-4;
+}
+
+.input-field:focus,
+.textarea-field:focus,
+.select-field:focus {
+  border-color: rgba(37, 99, 235, 0.45);
+  box-shadow:
+    0 0 0 4px rgba(37, 99, 235, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.premium-panel {
+  @apply rounded-[2rem] border p-6 sm:p-7;
+  border-color: var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 250, 255, 0.9));
+  box-shadow: var(--shadow);
+}
+
+.premium-panel-dark {
+  @apply rounded-[2rem] p-6 sm:p-7 text-white;
+  background: radial-gradient(circle at top right, rgba(96, 165, 250, 0.25), transparent 30%), linear-gradient(160deg, #0f172a 0%, #14213d 54%, #1d4ed8 100%);
+  box-shadow: var(--shadow-strong);
+}
+
+.info-tile {
+  @apply rounded-[1.5rem] border px-4 py-4;
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.stat-card {
+  @apply rounded-[1.6rem] border px-5 py-5;
+  border-color: rgba(37, 99, 235, 0.1);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(239, 246, 255, 0.92));
+}
+
+.subtle-ring {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 0 0 1px rgba(255, 255, 255, 0.24);
 }
 
 .grid-12 {

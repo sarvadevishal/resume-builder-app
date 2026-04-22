@@ -51,19 +51,19 @@ export default function AuthPage() {
 
   return (
     <div className="shell-width py-16">
-      <div className="mx-auto grid max-w-5xl gap-6 lg:grid-cols-2">
-        <SectionCard eyebrow="Welcome back" title={mode === "sign-in" ? "Sign in to continue tailoring" : "Create your ProofFit account"}>
-          <div className="mt-6 inline-flex rounded-full border border-[var(--line)] bg-white p-1">
+      <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+        <SectionCard eyebrow="Secure access" title={mode === "sign-in" ? "Sign in to continue tailoring" : "Create your ProofFit account"}>
+          <div className="mt-6 inline-flex rounded-full border border-[var(--line)] bg-white p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.8)]">
             <button
               type="button"
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${mode === "sign-in" ? "bg-[var(--ink)] text-white" : "text-[var(--ink-soft)]"}`}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${mode === "sign-in" ? "bg-[var(--ink)] text-white" : "text-[var(--ink-soft)]"}`}
               onClick={() => setMode("sign-in")}
             >
               Sign in
             </button>
             <button
               type="button"
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${mode === "sign-up" ? "bg-[var(--ink)] text-white" : "text-[var(--ink-soft)]"}`}
+              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${mode === "sign-up" ? "bg-[var(--ink)] text-white" : "text-[var(--ink-soft)]"}`}
               onClick={() => setMode("sign-up")}
             >
               Sign up
@@ -80,7 +80,7 @@ export default function AuthPage() {
                 autoComplete="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 outline-none"
+                className="input-field"
                 placeholder="you@company.com"
               />
             </label>
@@ -94,38 +94,59 @@ export default function AuthPage() {
                 autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 outline-none"
-                placeholder="••••••••"
+                className="input-field"
+                placeholder="Enter your password"
               />
             </label>
 
-            {error ? <p className="rounded-2xl bg-[rgba(182,59,47,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
-            {state.authMessage ? <p className="rounded-2xl bg-[rgba(45,106,79,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{state.authMessage}</p> : null}
+            {error ? <p className="rounded-2xl bg-[rgba(190,18,60,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
+            {state.authMessage ? <p className="rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{state.authMessage}</p> : null}
 
-            <button type="submit" className="button-primary w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Working..." : mode === "sign-in" ? "Sign in" : "Create account"}
-            </button>
+            <div className="grid gap-3">
+              <button type="submit" className="button-primary w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Working..." : mode === "sign-in" ? "Sign in" : "Create account"}
+              </button>
 
-            <button type="button" className="button-secondary w-full" onClick={handleGoogleContinue} disabled={isSubmitting}>
-              Continue with Google
-            </button>
+              <button type="button" className="button-secondary w-full" onClick={handleGoogleContinue} disabled={isSubmitting}>
+                Continue with Google
+              </button>
+            </div>
           </form>
         </SectionCard>
 
-        <SectionCard eyebrow="Why it matters" title="Trust is the feature">
-          <div className="mt-6 space-y-4">
-            {[
-              "No fake claims or inflated metrics",
-              "Meaningful result before any paywall",
-              "Privacy settings and deletion controls built in",
-              "Version history by company and role"
-            ].map((item) => (
-              <div key={item} className="rounded-3xl border border-[var(--line)] bg-white/80 p-5 text-sm font-semibold">
-                {item}
-              </div>
-            ))}
+        <div className="space-y-6">
+          <div className="premium-panel-dark">
+            <p className="text-sm uppercase tracking-[0.22em] text-white/60">Why users trust it</p>
+            <div className="mt-6 space-y-4">
+              {[
+                "No fake claims or inflated metrics",
+                "Meaningful result before any paywall",
+                "Privacy settings and deletion controls built in",
+                "Version history by company and role"
+              ].map((item) => (
+                <div key={item} className="rounded-[1.4rem] border border-white/10 bg-white/8 p-4 text-sm font-semibold">
+                  {item}
+                </div>
+              ))}
+            </div>
           </div>
-        </SectionCard>
+
+          <SectionCard eyebrow="Built for trust" title="A premium workflow that keeps proof visible">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {[
+                { label: "Evidence coverage", value: "Visible" },
+                { label: "Raw file deletion", value: "Default on" },
+                { label: "Unsupported gaps", value: "Never inserted" },
+                { label: "Export quality", value: "ATS-safe" }
+              ].map((item) => (
+                <div key={item.label} className="stat-card">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{item.label}</p>
+                  <p className="mt-3 text-2xl font-semibold">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </SectionCard>
+        </div>
       </div>
     </div>
   );

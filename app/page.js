@@ -3,17 +3,29 @@ import { SectionCard } from "@/components/ui/section-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 
 const trustPoints = [
-  "Every rewrite shows the source resume snippet, matched JD phrase, reason, and confidence.",
-  "Unsupported requirements become gaps instead of hallucinated edits.",
-  "ATS-safe mode keeps exports single-column, clean, and parser-friendly.",
-  "Built for data roles, not generic resumes that flatten technical nuance."
+  {
+    title: "Proof behind every edit",
+    detail: "Every suggested rewrite is anchored to a source resume snippet, matched job phrase, and confidence label."
+  },
+  {
+    title: "Hallucination-resistant by design",
+    detail: "Unsupported requirements stay in gap analysis instead of appearing as fabricated skills, metrics, or tools."
+  },
+  {
+    title: "ATS-safe output",
+    detail: "Single-column exports, standard section headers, parser warnings, and clean document structure come first."
+  },
+  {
+    title: "Built for data professionals",
+    detail: "Domain packs and heuristics are tuned for data engineering, analytics engineering, BI, and cloud data roles."
+  }
 ];
 
 const workflow = [
-  "Upload a PDF or DOCX resume",
-  "Paste a target job description",
-  "Review proof-backed, truthful edits",
-  "Accept changes and export an ATS-safe final version"
+  "Upload a source resume and keep privacy controls visible from the first step.",
+  "Analyze the target job description into must-haves, responsibilities, and seniority signals.",
+  "Review proof-backed edits, accept or reject changes, and inspect unsupported requirements.",
+  "Export an ATS-safe PDF or DOCX and retain version history by company and role."
 ];
 
 const scoreCards = [
@@ -31,12 +43,12 @@ export default function HomePage() {
       <section className="shell-width pt-10 sm:pt-16">
         <div className="grid-12 items-center gap-y-10">
           <div className="lg:col-span-7">
-            <span className="eyebrow">Proof-backed resume tailoring</span>
-            <h1 className="page-title mt-6 max-w-3xl text-balance">
-              The fastest way for data professionals to create truthful, ATS-safe, job-specific resumes.
+            <span className="eyebrow">Premium resume tailoring for data roles</span>
+            <h1 className="page-title mt-6 max-w-4xl text-balance">
+              Truthful, ATS-safe resume tailoring with proof behind every important change.
             </h1>
             <p className="muted mt-6 max-w-2xl text-lg leading-8">
-              ProofFit AI tailors your resume without inventing experience, stuffing keywords, or hiding behind fake ATS scores. Every important suggestion is grounded in evidence from your actual resume.
+              ProofFit AI helps data professionals tailor resumes for specific roles without keyword stuffing, fake claims, or opaque match scores. The workflow is built to earn trust first and still move fast.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/workspace" className="button-primary">
@@ -51,26 +63,47 @@ export default function HomePage() {
               <StatusBadge label="ATS-safe exports" tone="neutral" />
               <StatusBadge label="Built for data roles" tone="accent" />
             </div>
+            <div className="mt-10 grid gap-4 sm:grid-cols-3">
+              {[
+                { label: "Proof-backed edits", value: "100%" },
+                { label: "Meaningful result", value: "< 1 min" },
+                { label: "Opaque magic score", value: "0" }
+              ].map((item) => (
+                <div key={item.label} className="stat-card">
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{item.label}</p>
+                  <p className="mt-3 text-3xl font-semibold">{item.value}</p>
+                </div>
+              ))}
+            </div>
           </div>
+
           <div className="lg:col-span-5">
-            <div className="surface rounded-[2rem] p-6 sm:p-8">
-              <div className="rounded-[1.5rem] bg-[var(--ink)] p-6 text-white">
-                <p className="text-sm uppercase tracking-[0.2em] text-white/60">What users see</p>
-                <div className="mt-5 space-y-4">
-                  <div className="rounded-3xl bg-white/8 p-4">
-                    <p className="text-sm text-white/70">Supported by resume</p>
-                    <p className="mt-2 font-semibold">&quot;Built Airflow-managed ELT pipelines for Redshift&quot;</p>
+            <div className="premium-panel-dark">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="text-sm uppercase tracking-[0.22em] text-white/60">Premium workspace</p>
+                  <p className="mt-2 text-2xl font-semibold">A fast review loop for serious job searches</p>
+                </div>
+                <div className="rounded-full border border-white/10 bg-white/10 px-4 py-2 text-sm font-semibold text-white/80">Live proof</div>
+              </div>
+
+              <div className="mt-6 space-y-4">
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/8 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">Supported by resume</p>
+                  <p className="mt-3 text-base font-semibold">Built Python and SQL ELT pipelines for finance reporting workloads.</p>
+                </div>
+                <div className="rounded-[1.5rem] border border-white/10 bg-white/8 p-5">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/55">Matched job phrase</p>
+                  <p className="mt-3 text-base font-semibold">Own orchestration and warehouse reliability for analytics pipelines.</p>
+                </div>
+                <div className="rounded-[1.5rem] bg-white/95 p-5 text-[var(--ink)]">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">Confidence 0.89</p>
+                    <span className="rounded-full bg-[var(--surface-muted)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]">ATS-safe</span>
                   </div>
-                  <div className="rounded-3xl bg-white/8 p-4">
-                    <p className="text-sm text-white/70">Matched JD phrase</p>
-                    <p className="mt-2 font-semibold">&quot;Own orchestration and warehouse performance&quot;</p>
-                  </div>
-                  <div className="rounded-3xl bg-[var(--accent)]/90 p-4 text-[var(--ink)]">
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em]">Confidence 0.89</p>
-                    <p className="mt-2 text-sm leading-7">
-                      Rewrite keeps Airflow, Redshift, and performance tuning because they are explicitly supported in the source resume.
-                    </p>
-                  </div>
+                  <p className="mt-3 text-sm leading-7">
+                    Rewrite preserves the original tools and scope while improving clarity around ownership and reliability. Unsupported tools stay in gap analysis instead of being inserted automatically.
+                  </p>
                 </div>
               </div>
             </div>
@@ -81,20 +114,20 @@ export default function HomePage() {
       <section className="shell-width mt-20">
         <div className="grid gap-6 lg:grid-cols-4">
           {trustPoints.map((point) => (
-            <SectionCard key={point} title={point.split(",")[0]}>
-              <p className="muted text-sm leading-7">{point}</p>
+            <SectionCard key={point.title} title={point.title}>
+              <p className="muted mt-4 text-sm leading-7">{point.detail}</p>
             </SectionCard>
           ))}
         </div>
       </section>
 
       <section className="shell-width mt-24 grid-12">
-        <SectionCard className="lg:col-span-7" eyebrow="Workflow" title="A premium flow built around trust, not generic AI output">
+        <SectionCard className="lg:col-span-7" eyebrow="Workflow" title="An enterprise-grade flow built around trust, evidence, and speed">
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
             {workflow.map((step, index) => (
-              <div key={step} className="rounded-[1.5rem] border border-[var(--line)] bg-white/80 p-5">
+              <div key={step} className="info-tile">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Step {index + 1}</p>
-                <p className="mt-3 text-lg font-semibold">{step}</p>
+                <p className="mt-3 text-lg font-semibold leading-8">{step}</p>
               </div>
             ))}
           </div>
@@ -102,7 +135,7 @@ export default function HomePage() {
         <SectionCard className="lg:col-span-5" eyebrow="Scoring" title="No single opaque match number">
           <div className="mt-6 space-y-3">
             {scoreCards.map((item) => (
-              <div key={item} className="flex items-center justify-between rounded-2xl border border-[var(--line)] bg-white/80 px-4 py-3">
+              <div key={item} className="info-tile flex items-center justify-between gap-4">
                 <span className="font-semibold">{item}</span>
                 <span className="text-sm text-[var(--ink-soft)]">Explained</span>
               </div>
@@ -128,7 +161,7 @@ export default function HomePage() {
               "Dimensional modeling",
               "Cost optimization"
             ].map((term) => (
-              <span key={term} className="rounded-full border border-[var(--line)] bg-white px-4 py-2 text-sm font-semibold">
+              <span key={term} className="rounded-full border border-[var(--line)] bg-white px-4 py-2 text-sm font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]">
                 {term}
               </span>
             ))}

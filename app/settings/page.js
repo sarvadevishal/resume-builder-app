@@ -29,15 +29,12 @@ export default function SettingsPage() {
   }
 
   return (
-    <AppShell
-      title="Settings and privacy"
-      description="Control structured data retention, delete uploads, and review audit events without hunting through hidden menus."
-    >
+    <AppShell title="Settings and privacy" description="Control structured data retention, delete uploads, and review audit events without hunting through hidden menus.">
       <div className="grid gap-6 xl:grid-cols-2">
         <SectionCard title="Privacy preferences" eyebrow="Trust controls">
           <div className="mt-6 space-y-4">
             {preferenceItems.map((item) => (
-              <label key={item.key} className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--line)] bg-white px-4 py-4">
+              <label key={item.key} className="flex items-center justify-between gap-4 rounded-[1.35rem] border border-[var(--line)] bg-white/90 px-4 py-4">
                 <span className="max-w-md text-sm font-semibold">{item.label}</span>
                 <input
                   type="checkbox"
@@ -52,12 +49,13 @@ export default function SettingsPage() {
               Clear stored resume data
             </button>
             {statusMessage ? (
-              <span className="rounded-2xl bg-[rgba(45,106,79,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">
+              <span className="rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">
                 {statusMessage}
               </span>
             ) : null}
           </div>
         </SectionCard>
+
         <SectionCard title="Audit log snapshot" eyebrow="Recent events">
           <div className="mt-6 space-y-3">
             {(state.auditEvents.length
@@ -68,7 +66,7 @@ export default function SettingsPage() {
                   createdAt: event.createdAt
                 }))
             ).map((event) => (
-              <div key={event.id} className="rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm">
+              <div key={event.id} className="info-tile text-sm">
                 <p className="font-semibold">{event.message}</p>
                 <p className="muted mt-1 text-xs">{event.createdAt}</p>
               </div>
