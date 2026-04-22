@@ -88,7 +88,7 @@ export function ExportPanel({ structuredResume, sessionContext, onExport, isExpo
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-3">
+      <div className="mt-5 grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
         <SelectField label="Format" value={draftOptions.format} onChange={(value) => updateOption("format", value)} options={exportFormats} />
         <SelectField label="Template" value={resolvedOptions.templateId} onChange={(value) => updateOption("templateId", value)} options={availableTemplates} />
         <SelectField label="Resume mode" value={draftOptions.mode} onChange={(value) => updateOption("mode", value)} options={exportModes} />
@@ -97,7 +97,7 @@ export function ExportPanel({ structuredResume, sessionContext, onExport, isExpo
         <SelectField label="Font family" value={draftOptions.fontFamily} onChange={(value) => updateOption("fontFamily", value)} options={fontChoices} />
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-3">
+      <div className="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         <ToggleField
           label="Include page numbers"
           description="Useful for executive packets and longer resumes. Available only for PDF."
@@ -121,7 +121,7 @@ export function ExportPanel({ structuredResume, sessionContext, onExport, isExpo
         />
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="mt-5 grid gap-4 2xl:grid-cols-[1.2fr_0.8fr]">
         <div className="rounded-[1.3rem] bg-[var(--surface-muted)] p-4">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Export summary</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">

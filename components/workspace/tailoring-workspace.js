@@ -156,7 +156,7 @@ export function TailoringWorkspace({ session }) {
         ))}
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr_0.9fr]">
+      <div className="grid gap-6 xl:grid-cols-[minmax(290px,0.95fr)_minmax(460px,1.15fr)_minmax(300px,0.9fr)]">
         <section className="premium-panel">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Original resume</h2>
