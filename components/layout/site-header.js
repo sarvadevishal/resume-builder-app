@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -22,7 +23,7 @@ export function SiteHeader() {
       <div className="shell-width py-4">
         <div className="flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[1.35rem] bg-[linear-gradient(135deg,var(--accent),#0f172a)] text-sm font-bold uppercase tracking-[0.18em] text-white shadow-[0_16px_34px_rgba(37,99,235,0.3)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[1.35rem] bg-[linear-gradient(135deg,var(--brand-deep),var(--brand-soft))] text-sm font-bold uppercase tracking-[0.18em] text-white shadow-[0_16px_34px_rgba(49,114,204,0.24)]">
               PF
             </div>
             <div>
@@ -39,9 +40,12 @@ export function SiteHeader() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    isActive ? "bg-[var(--ink)] text-white" : "text-[var(--ink-soft)] hover:bg-white hover:text-[var(--ink)]"
-                  }`}
+                  className={clsx(
+                    "rounded-full px-4 py-2 text-sm font-semibold transition",
+                    isActive
+                      ? "bg-[linear-gradient(135deg,var(--brand-deep),var(--brand-mid))] text-white shadow-[0_12px_28px_rgba(49,114,204,0.18)]"
+                      : "text-[var(--ink-soft)] hover:bg-white hover:text-[var(--ink)]"
+                  )}
                 >
                   {item.label}
                 </Link>
@@ -73,8 +77,9 @@ export function SiteHeader() {
                 Sign in
               </Link>
             )}
-            <Link href="/dashboard" className="button-primary">
-              Open app
+            <Link href="/dashboard" className="button-primary min-w-[6.25rem]">
+              <span className="sm:hidden">App</span>
+              <span className="hidden sm:inline">Open app</span>
             </Link>
           </div>
         </div>
@@ -85,9 +90,12 @@ export function SiteHeader() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-[1.25rem] px-4 py-3 text-sm font-semibold transition ${
-                  pathname === item.href ? "bg-[var(--ink)] text-white" : "text-[var(--ink-soft)] hover:bg-[var(--surface-muted)] hover:text-[var(--ink)]"
-                }`}
+                className={clsx(
+                  "rounded-[1.25rem] px-4 py-3 text-sm font-semibold transition",
+                  pathname === item.href
+                    ? "bg-[linear-gradient(135deg,var(--brand-deep),var(--brand-mid))] text-white shadow-[0_14px_26px_rgba(49,114,204,0.16)]"
+                    : "text-[var(--ink-soft)] hover:bg-[var(--surface-muted)] hover:text-[var(--ink)]"
+                )}
                 onClick={() => setIsMobileNavOpen(false)}
               >
                 {item.label}

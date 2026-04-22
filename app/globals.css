@@ -3,24 +3,27 @@
 :root {
   --font-heading: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --font-body: "Aptos", "Segoe UI Variable", "Segoe UI", "Helvetica Neue", sans-serif;
-  --background: #f4f7fb;
-  --background-strong: #eef3fb;
+  --background: #f5f8fc;
+  --background-strong: #eaf1fb;
   --surface: rgba(255, 255, 255, 0.82);
   --surface-strong: #ffffff;
-  --surface-muted: #eef4ff;
-  --surface-accent: #eff6ff;
-  --ink: #0f172a;
-  --ink-soft: #546174;
-  --line: rgba(15, 23, 42, 0.08);
-  --line-strong: rgba(37, 99, 235, 0.18);
-  --accent: #2563eb;
-  --accent-strong: #1d4ed8;
-  --accent-soft: rgba(37, 99, 235, 0.1);
+  --surface-muted: #edf4ff;
+  --surface-accent: #eef6ff;
+  --ink: #18324b;
+  --ink-soft: #5f7388;
+  --line: rgba(24, 50, 75, 0.08);
+  --line-strong: rgba(49, 114, 204, 0.2);
+  --accent: #3172cc;
+  --accent-strong: #245db0;
+  --accent-soft: rgba(49, 114, 204, 0.1);
+  --brand-deep: #3a66ab;
+  --brand-mid: #4b86d9;
+  --brand-soft: #83b7ef;
   --success: #0f766e;
   --warning: #b45309;
   --danger: #be123c;
-  --shadow: 0 26px 80px rgba(15, 23, 42, 0.08);
-  --shadow-strong: 0 34px 90px rgba(37, 99, 235, 0.12);
+  --shadow: 0 26px 80px rgba(24, 50, 75, 0.08);
+  --shadow-strong: 0 34px 90px rgba(49, 114, 204, 0.16);
 }
 
 * {
@@ -34,9 +37,9 @@ html {
 body {
   font-family: var(--font-body), sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 28%),
-    radial-gradient(circle at top right, rgba(14, 165, 233, 0.1), transparent 24%),
-    radial-gradient(circle at bottom center, rgba(15, 118, 110, 0.08), transparent 26%),
+    radial-gradient(circle at top left, rgba(75, 134, 217, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(131, 183, 239, 0.16), transparent 24%),
+    radial-gradient(circle at bottom center, rgba(15, 118, 110, 0.07), transparent 26%),
     linear-gradient(180deg, #fbfdff 0%, var(--background) 100%);
   color: var(--ink);
 }
@@ -110,27 +113,27 @@ textarea::placeholder {
 }
 
 .button-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition;
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold whitespace-nowrap transition;
   color: white;
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-  box-shadow: 0 16px 36px rgba(37, 99, 235, 0.24);
+  background: linear-gradient(135deg, var(--brand-deep), var(--brand-mid));
+  box-shadow: 0 16px 36px rgba(49, 114, 204, 0.24);
 }
 
 .button-primary:hover {
   transform: translateY(-1px);
-  box-shadow: 0 22px 40px rgba(37, 99, 235, 0.28);
+  box-shadow: 0 22px 40px rgba(49, 114, 204, 0.28);
 }
 
 .button-secondary {
   @apply inline-flex items-center justify-center gap-2 rounded-full border px-5 py-3 text-sm font-semibold transition;
   border-color: var(--line-strong);
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.88);
 }
 
 .button-secondary:hover {
-  background: white;
-  border-color: rgba(37, 99, 235, 0.24);
+  background: rgba(245, 250, 255, 0.96);
+  border-color: rgba(49, 114, 204, 0.24);
 }
 
 .button-ghost {
@@ -159,9 +162,9 @@ textarea::placeholder {
 .input-field:focus,
 .textarea-field:focus,
 .select-field:focus {
-  border-color: rgba(37, 99, 235, 0.45);
+  border-color: rgba(49, 114, 204, 0.45);
   box-shadow:
-    0 0 0 4px rgba(37, 99, 235, 0.08),
+    0 0 0 4px rgba(49, 114, 204, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -174,7 +177,10 @@ textarea::placeholder {
 
 .premium-panel-dark {
   @apply rounded-[2rem] p-6 sm:p-7 text-white;
-  background: radial-gradient(circle at top right, rgba(96, 165, 250, 0.25), transparent 30%), linear-gradient(160deg, #0f172a 0%, #14213d 54%, #1d4ed8 100%);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.18), transparent 28%),
+    radial-gradient(circle at bottom left, rgba(186, 218, 255, 0.14), transparent 24%),
+    linear-gradient(155deg, #3a66ab 0%, #4678c2 52%, #77acdf 100%);
   box-shadow: var(--shadow-strong);
 }
 
