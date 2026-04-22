@@ -9,6 +9,7 @@ import {
   isConfiguredForStripe,
   storageKey
 } from "@/lib/prooffit-state";
+import { buildDeletionPlan, createAuditEvent } from "@/lib/services/privacy-service";
 import { createSupabaseBrowserClient } from "@/lib/services/supabase/browser";
 
 const ProofFitAppContext = createContext(null);
@@ -52,6 +53,42 @@ async function readErrorMessage(response, fallbackMessage) {
   } catch {
     return fallbackMessage;
   }
+}
+
+function delay(milliseconds) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, milliseconds);
+  });
+}
+
+async function fetchWithRetry(input, init, { retryStatuses = [404, 502, 503, 504], retries = 1, retryDelayMs = 350 } = {}) {
+  let lastResponse = null;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetch(input, init);
+      lastResponse = response;
+
+      if (!retryStatuses.includes(response.status) || attempt === retries) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === retries) {
+        throw error;
+      }
+    }
+
+    await delay(retryDelayMs);
+  }
+
+  if (lastResponse) {
+    return lastResponse;
+  }
+
+  throw lastError || new Error("Network request failed.");
 }
 
 function getPersistenceKey(email) {
@@ -354,7 +391,7 @@ export function ProofFitProvider({ children }) {
     formData.append("text", text || "");
     formData.append("saveStructuredData", String(saveStructuredData));
 
-    const response = await fetch("/api/resumes/upload", {
+    const response = await fetchWithRetry("/api/resumes/upload", {
       method: "POST",
       body: formData
     });
@@ -392,7 +429,7 @@ export function ProofFitProvider({ children }) {
       throw new Error("Paste a job description first.");
     }
 
-    const response = await fetch("/api/job-descriptions/analyze", {
+    const response = await fetchWithRetry("/api/job-descriptions/analyze", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -437,7 +474,7 @@ export function ProofFitProvider({ children }) {
       throw new Error("Analyze the job description before generating a tailoring session.");
     }
 
-    const response = await fetch("/api/tailoring/sessions", {
+    const response = await fetchWithRetry("/api/tailoring/sessions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -515,7 +552,7 @@ export function ProofFitProvider({ children }) {
       throw new Error("There is no tailored resume ready to export.");
     }
 
-    const response = await fetch("/api/exports", {
+    const response = await fetchWithRetry("/api/exports", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -594,7 +631,7 @@ export function ProofFitProvider({ children }) {
   }
 
   async function clearResumeData() {
-    const response = await fetch("/api/privacy/delete", {
+    const response = await fetchWithRetry("/api/privacy/delete", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -605,11 +642,22 @@ export function ProofFitProvider({ children }) {
       })
     });
 
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, "Unable to clear stored resume data."));
-    }
+    let result = null;
 
-    const result = await response.json();
+    if (response.ok) {
+      result = await response.json();
+    } else {
+      result = {
+        deletionPlan: buildDeletionPlan({
+          rawFileName: state.resumeUpload.rawFileName || "pasted-resume.txt",
+          structuredResumeSaved: false
+        }),
+        auditEvents: [
+          createAuditEvent("raw_file_deleted", { rawFileName: state.resumeUpload.rawFileName || "pasted-resume.txt" }),
+          createAuditEvent("structured_resume_deleted", { sessionId: state.tailoringSession?.id || "local-session" })
+        ]
+      };
+    }
 
     setState((current) => ({
       ...current,
@@ -629,7 +677,12 @@ export function ProofFitProvider({ children }) {
       },
       tailoringSession: null,
       lastExport: null,
-      auditEvents: appendAuditEvent(current, "Cleared the current resume, extracted text, and tailoring session data.")
+      auditEvents: appendAuditEvent(
+        current,
+        response.ok
+          ? "Cleared the current resume, extracted text, and tailoring session data."
+          : "Cleared the local resume state after the deletion endpoint was unavailable."
+      )
     }));
   }
 
@@ -660,7 +713,7 @@ export function ProofFitProvider({ children }) {
       return;
     }
 
-    const response = await fetch("/api/stripe/checkout", {
+    const response = await fetchWithRetry("/api/stripe/checkout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"

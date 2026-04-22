@@ -50,9 +50,16 @@ export default function UploadPage() {
   }
 
   async function handleClearAll() {
-    await clearResumeData();
-    resetLocalInputs();
-    setStatusMessage("Cleared the current upload and extracted resume data.");
+    setError("");
+    setStatusMessage("");
+
+    try {
+      await clearResumeData();
+      resetLocalInputs();
+      setStatusMessage("Cleared the current upload and extracted resume data.");
+    } catch (clearError) {
+      setError(clearError.message);
+    }
   }
 
   return (

@@ -8,6 +8,7 @@ import { useProofFitApp } from "@/components/providers/prooffit-provider";
 export default function SettingsPage() {
   const { state, updatePrivacyPreferences, clearResumeData, clearSavedHistory } = useProofFitApp();
   const [statusMessage, setStatusMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
   const preferenceItems = [
     {
       key: "deleteRawUploads",
@@ -24,11 +25,19 @@ export default function SettingsPage() {
   ];
 
   async function handleClearData() {
-    await clearResumeData();
-    setStatusMessage("Cleared the stored resume and tailoring session data.");
+    setErrorMessage("");
+    setStatusMessage("");
+
+    try {
+      await clearResumeData();
+      setStatusMessage("Cleared the stored resume and tailoring session data.");
+    } catch (error) {
+      setErrorMessage(error.message);
+    }
   }
 
   function handleClearHistory() {
+    setErrorMessage("");
     clearSavedHistory();
     setStatusMessage("Cleared saved version history for this user.");
   }
@@ -56,6 +65,9 @@ export default function SettingsPage() {
             <button type="button" className="button-secondary" onClick={handleClearHistory}>
               Clear saved versions
             </button>
+            {errorMessage ? (
+              <span className="rounded-2xl bg-[rgba(190,18,60,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{errorMessage}</span>
+            ) : null}
             {statusMessage ? (
               <span className="rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">
                 {statusMessage}

@@ -2,17 +2,24 @@ import { NextResponse } from "next/server";
 import { buildDeletionPlan, createAuditEvent } from "@/lib/services/privacy-service";
 
 export async function POST(request) {
-  const body = await request.json();
+  let body = {};
+
+  try {
+    body = await request.json();
+  } catch {
+    body = {};
+  }
+
   const deletionPlan = buildDeletionPlan({
-    rawFileName: body.rawFileName,
+    rawFileName: body.rawFileName || "inline-text",
     structuredResumeSaved: false
   });
 
   return NextResponse.json({
     deletionPlan,
     auditEvents: [
-      createAuditEvent("raw_file_deleted", { rawFileName: body.rawFileName }),
-      createAuditEvent("structured_resume_deleted", { sessionId: body.sessionId })
+      createAuditEvent("raw_file_deleted", { rawFileName: body.rawFileName || "inline-text" }),
+      createAuditEvent("structured_resume_deleted", { sessionId: body.sessionId || "local-session" })
     ]
   });
 }
