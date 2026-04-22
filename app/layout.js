@@ -10,8 +10,8 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
-      <body className="bg-[var(--background)] text-[var(--ink)] antialiased">
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+      <body className="bg-[var(--background)] text-[var(--ink)] antialiased" suppressHydrationWarning>
         <ProofFitProvider>
           <div className="min-h-screen">
             <SiteHeader />

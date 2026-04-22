@@ -545,12 +545,15 @@ export function ProofFitProvider({ children }) {
     }));
   }
 
-  async function exportResume(format) {
+  async function exportResume(input) {
     const finalStructuredResume = buildFinalStructuredResume(state.tailoringSession);
 
     if (!finalStructuredResume) {
       throw new Error("There is no tailored resume ready to export.");
     }
+
+    const exportOptions = typeof input === "string" ? { format: input } : input || {};
+    const format = exportOptions.format || "pdf";
 
     const response = await fetchWithRetry("/api/exports", {
       method: "POST",
@@ -559,7 +562,13 @@ export function ProofFitProvider({ children }) {
       },
       body: JSON.stringify({
         format,
-        structuredResume: finalStructuredResume
+        exportOptions,
+        structuredResume: finalStructuredResume,
+        sessionContext: {
+          company: state.jobDescription.company,
+          role: state.jobDescription.role,
+          jobDescriptionAnalysis: state.jobDescription.analysis
+        }
       })
     });
 
@@ -568,7 +577,7 @@ export function ProofFitProvider({ children }) {
     }
 
     const blob = await response.blob();
-    const extension = format === "docx" ? "docx" : "pdf";
+    const extension = format === "docx" ? "docx" : format === "doc" ? "doc" : "pdf";
     const objectUrl = window.URL.createObjectURL(blob);
     const downloadLink = document.createElement("a");
     downloadLink.href = objectUrl;
@@ -583,6 +592,7 @@ export function ProofFitProvider({ children }) {
       versionHistory: [buildVersionFromSession(current.tailoringSession), ...current.versionHistory].slice(0, 12),
       lastExport: {
         format,
+        mode: exportOptions.mode || "ats",
         exportedAt: new Date().toLocaleString("en-US")
       },
       auditEvents: appendAuditEvent(current, `Exported the current resume as ${extension.toUpperCase()}.`)

@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { appNavigation } from "@/lib/constants/navigation";
 import { getWorkflowStepState } from "@/lib/prooffit-state";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
@@ -36,6 +36,7 @@ const orderedSteps = [
 
 export function AppShell({ children, title, description, fullWidth = false }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { state, startNewWorkflow } = useProofFitApp();
   const workflowState = getWorkflowStepState(state);
   const completedStepCount = orderedSteps.filter((step) => workflowState[step.key]).length;
@@ -43,6 +44,11 @@ export function AppShell({ children, title, description, fullWidth = false }) {
   const activeStepIndex = allStepsComplete ? orderedSteps.length - 1 : completedStepCount;
   const progressPercent = Math.max(12, Math.round((completedStepCount / orderedSteps.length) * 100));
   const currentStep = orderedSteps[activeStepIndex];
+
+  function handleStartNew() {
+    startNewWorkflow();
+    router.push("/upload");
+  }
 
   return (
     <div className={`${fullWidth ? "shell-width max-w-none" : "shell-width"} py-10`}>
@@ -58,14 +64,19 @@ export function AppShell({ children, title, description, fullWidth = false }) {
                   key={item.href}
                   href={item.href}
                   className={clsx(
-                    "block rounded-[1.5rem] px-4 py-4 transition",
+                    "block rounded-[1.5rem] px-5 py-4 transition",
                     isActive
-                      ? "bg-[linear-gradient(135deg,var(--brand-deep),var(--brand-mid))] text-white shadow-[0_18px_36px_rgba(49,114,204,0.22)]"
+                      ? "border border-[rgba(255,255,255,0.22)] bg-[linear-gradient(135deg,#2f5fa8_0%,#4f82cf_58%,#79ace1_100%)] text-white shadow-[0_20px_38px_rgba(49,114,204,0.24)]"
                       : "bg-white/78 hover:bg-white"
                   )}
                 >
-                  <p className="text-sm font-semibold">{item.label}</p>
-                  <p className={clsx("mt-1 text-xs font-medium", isActive ? "text-white/78" : "text-[var(--ink-soft)]")}>{item.detail}</p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className={clsx("text-sm font-semibold", isActive ? "text-white" : "text-[var(--ink)]")}>{item.label}</p>
+                      <p className={clsx("mt-1 text-xs font-medium leading-5", isActive ? "text-white/88" : "text-[var(--ink-soft)]")}>{item.detail}</p>
+                    </div>
+                    {isActive ? <span className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-full bg-white shadow-[0_0_0_4px_rgba(255,255,255,0.18)]" /> : null}
+                  </div>
                 </Link>
               );
             })}
@@ -167,7 +178,7 @@ export function AppShell({ children, title, description, fullWidth = false }) {
                 <p className="muted mt-3 max-w-3xl text-sm leading-7 sm:text-base">{description}</p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <button type="button" className="button-secondary" onClick={startNewWorkflow}>
+                <button type="button" className="button-secondary" onClick={handleStartNew}>
                   Start new
                 </button>
                 <div className="rounded-[1.5rem] border border-[var(--line)] bg-white/80 px-4 py-3 text-sm font-semibold text-[var(--ink-soft)]">

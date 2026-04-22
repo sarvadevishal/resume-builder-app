@@ -4,7 +4,7 @@ module.exports = defineConfig({
   testDir: "./tests/e2e",
   timeout: 60000,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3001",
     headless: true,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
@@ -21,9 +21,9 @@ module.exports = defineConfig({
     }
   ],
   webServer: {
-    command: "npm.cmd run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: true,
+    command: "powershell -Command \"$env:NEXT_PUBLIC_FORCE_DEMO_AUTH='true'; npm.cmd run dev -- --port 3001\"",
+    url: "http://localhost:3001",
+    reuseExistingServer: false,
     timeout: 120000
   }
 });

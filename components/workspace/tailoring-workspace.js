@@ -5,6 +5,7 @@ import { useProofFitApp } from "@/components/providers/prooffit-provider";
 import { buildFinalStructuredResume, getEffectiveSuggestionBullet } from "@/lib/prooffit-state";
 import { MetricBar } from "@/components/ui/metric-bar";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ExportPanel } from "@/components/export/export-panel";
 
 function getDecisionTone(decision) {
   if (decision === "accepted") {
@@ -115,12 +116,12 @@ export function TailoringWorkspace({ session }) {
     );
   }
 
-  async function handleExport(format) {
+  async function handleExport(exportOptions) {
     setIsExporting(true);
 
     try {
-      await exportResume(format);
-      setStatusMessage(`Exported the tailored resume as ${format.toUpperCase()}.`);
+      await exportResume(exportOptions);
+      setStatusMessage(`Exported the tailored resume as ${exportOptions.format.toUpperCase()}.`);
     } catch (error) {
       setStatusMessage(error.message);
     } finally {
@@ -187,12 +188,6 @@ export function TailoringWorkspace({ session }) {
               <button type="button" className="button-secondary" onClick={handleCopySection}>
                 Copy section
               </button>
-              <button type="button" className="button-primary" onClick={() => handleExport("pdf")} disabled={isExporting}>
-                {isExporting ? "Exporting..." : "Export PDF"}
-              </button>
-              <button type="button" className="button-secondary" onClick={() => handleExport("docx")} disabled={isExporting}>
-                Export DOCX
-              </button>
             </div>
           </div>
 
@@ -213,6 +208,19 @@ export function TailoringWorkspace({ session }) {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="mt-6">
+            <ExportPanel
+              structuredResume={finalStructuredResume}
+              sessionContext={{
+                company: session.company,
+                role: session.role,
+                jobDescriptionAnalysis: session.jobDescriptionAnalysis
+              }}
+              onExport={handleExport}
+              isExporting={isExporting}
+            />
           </div>
 
           <div className="mt-6">
