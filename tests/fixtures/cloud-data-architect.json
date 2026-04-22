@@ -1,0 +1,6 @@
+{
+  "role": "Cloud Data Architect",
+  "resumeText": "Summary\nCloud data architect with AWS, Redshift, Glue, Lambda, and Terraform experience.\nSkills\nAWS\nRedshift\nGlue\nLambda\nTerraform\nExperience\nDesigned AWS-based data architecture and automated warehouse ingestion.\nEducation\nM.S. in Information Systems",
+  "jobDescriptionText": "Cloud Data Architect role. Must have AWS, Terraform, Snowflake, and data platform reliability expertise.",
+  "expectedGaps": ["snowflake"]
+}

@@ -1,0 +1,37 @@
+{
+  "name": "prooffit-ai",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "@tailwindcss/postcss": "latest",
+    "clsx": "^2.1.1",
+    "docx": "latest",
+    "mammoth": "latest",
+    "next": "16.2.4",
+    "openai": "latest",
+    "pdf-lib": "^1.17.1",
+    "pdf-parse": "latest",
+    "react": "19.2.5",
+    "react-dom": "19.2.5",
+    "stripe": "latest",
+    "tailwindcss": "4.1.12",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "eslint": "latest",
+    "eslint-config-next": "16.2.4",
+    "vitest": "^3.2.4"
+  }
+}

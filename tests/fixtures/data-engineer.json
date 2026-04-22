@@ -1,0 +1,6 @@
+{
+  "role": "Data Engineer",
+  "resumeText": "Summary\nData engineer focused on SQL, Python, Airflow, and Redshift.\nSkills\nSQL\nPython\nAirflow\nRedshift\nExperience\nBuilt ELT pipelines in Python and SQL for finance reporting workloads.\nMaintained Redshift tables and improved data quality for executive dashboards.\nEducation\nB.S. in Information Systems",
+  "jobDescriptionText": "We are hiring a Data Engineer. Must have SQL, Python, Airflow, and Snowflake. Build reliable pipelines and improve warehouse quality.",
+  "expectedGaps": ["snowflake"]
+}

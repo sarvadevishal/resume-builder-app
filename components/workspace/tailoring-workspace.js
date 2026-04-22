@@ -1,0 +1,230 @@
+"use client";
+
+import { useState } from "react";
+import { useProofFitApp } from "@/components/providers/prooffit-provider";
+import { buildFinalStructuredResume, getEffectiveSuggestionBullet } from "@/lib/prooffit-state";
+import { MetricBar } from "@/components/ui/metric-bar";
+import { StatusBadge } from "@/components/ui/status-badge";
+
+export function TailoringWorkspace({ session }) {
+  const { updateSuggestionDecision, updateManualBullet, copyCurrentResumeSection, exportResume } = useProofFitApp();
+  const [selectedSuggestionId, setSelectedSuggestionId] = useState(session.suggestions[0]?.id ?? null);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [isExporting, setIsExporting] = useState(false);
+  const [manualDrafts, setManualDrafts] = useState(
+    Object.fromEntries(session.suggestions.map((suggestion) => [suggestion.id, suggestion.manualBullet ?? suggestion.suggestedBullet]))
+  );
+
+  const selectedSuggestion = session.suggestions.find((item) => item.id === selectedSuggestionId) ?? null;
+  const finalStructuredResume = buildFinalStructuredResume(session);
+  const tailoredBullets = finalStructuredResume?.sections.find((section) => section.name.toLowerCase() === "experience")?.items ?? session.originalBullets;
+
+  async function handleCopySection() {
+    try {
+      await copyCurrentResumeSection();
+      setStatusMessage("Copied the tailored experience section.");
+    } catch (error) {
+      setStatusMessage(error.message);
+    }
+  }
+
+  function handleSaveManualEdit() {
+    if (!selectedSuggestion) {
+      return;
+    }
+
+    updateManualBullet(selectedSuggestion.id, manualDrafts[selectedSuggestion.id] ?? "");
+    updateSuggestionDecision(selectedSuggestion.id, "manual");
+    setStatusMessage("Saved the manual edit into the tailored draft.");
+  }
+
+  async function handleExport(format) {
+    setIsExporting(true);
+
+    try {
+      await exportResume(format);
+      setStatusMessage(`Exported the tailored resume as ${format.toUpperCase()}.`);
+    } catch (error) {
+      setStatusMessage(error.message);
+    } finally {
+      setIsExporting(false);
+    }
+  }
+
+  if (!session.suggestions.length) {
+    return (
+      <div className="surface rounded-[2rem] p-8">
+        <p className="text-2xl font-semibold">No supported rewrites were generated</p>
+        <p className="muted mt-4 text-sm leading-7">
+          The resume may not contain enough evidence for the target role yet. Review the gap analysis and add real source-backed details before trying again.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr_0.9fr]">
+      <section className="surface rounded-[2rem] p-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Original resume</h2>
+          <StatusBadge label="Source of truth" tone="neutral" />
+        </div>
+        <div className="mt-6 space-y-5">
+          {session.structuredResume.sections.map((section) => (
+            <div key={section.name} className="rounded-3xl border border-[var(--line)] bg-white p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{section.name}</p>
+              <div className="mt-3 space-y-2">
+                {section.items.map((item) => (
+                  <p key={item} className="text-sm leading-7">
+                    {item}
+                  </p>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="surface rounded-[2rem] p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Tailored draft</h2>
+          <div className="flex flex-wrap gap-2">
+            <button type="button" className="button-secondary" onClick={handleCopySection}>
+              Copy section
+            </button>
+            <button type="button" className="button-primary" onClick={() => handleExport("pdf")} disabled={isExporting}>
+              {isExporting ? "Exporting..." : "Export PDF"}
+            </button>
+            <button type="button" className="button-secondary" onClick={() => handleExport("docx")} disabled={isExporting}>
+              Export DOCX
+            </button>
+          </div>
+        </div>
+
+        {statusMessage ? <p className="mt-4 rounded-2xl bg-[rgba(45,106,79,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{statusMessage}</p> : null}
+
+        <div className="mt-6 rounded-[1.75rem] border border-[var(--line)] bg-white p-5">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Experience</p>
+          <div className="mt-4 space-y-3">
+            {tailoredBullets.map((bullet) => (
+              <div key={bullet} className="rounded-2xl bg-[var(--surface-muted)] px-4 py-3 text-sm leading-7">
+                {bullet}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Change queue</p>
+          <div className="mt-3 space-y-3" role="tablist" aria-label="Tailoring suggestions">
+            {session.suggestions.map((suggestion) => (
+              <button
+                key={suggestion.id}
+                type="button"
+                role="tab"
+                aria-selected={suggestion.id === selectedSuggestionId}
+                onClick={() => setSelectedSuggestionId(suggestion.id)}
+                className={`w-full rounded-3xl border p-4 text-left transition ${
+                  suggestion.id === selectedSuggestionId ? "border-[var(--ink)] bg-[var(--surface-muted)]" : "border-[var(--line)] bg-white"
+                }`}
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{suggestion.label}</p>
+                <p className="mt-2 text-sm font-semibold leading-7">{getEffectiveSuggestionBullet(suggestion)}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="surface rounded-[2rem] p-6">
+        <h2 className="text-xl font-semibold">Evidence and reasoning</h2>
+        {selectedSuggestion ? (
+          <div className="mt-6 space-y-4">
+            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">{selectedSuggestion.label}</p>
+                  <p className="mt-2 text-sm leading-7">{selectedSuggestion.whyItChanged}</p>
+                </div>
+                <StatusBadge label={`Confidence ${selectedSuggestion.confidenceScore}`} tone="accent" />
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <div className="rounded-2xl bg-[var(--surface-muted)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Source resume snippet</p>
+                  <p className="mt-2 text-sm leading-7">{selectedSuggestion.sourceResumeSnippet}</p>
+                </div>
+                <div className="rounded-2xl bg-[var(--surface-muted)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Matched JD phrase</p>
+                  <p className="mt-2 text-sm leading-7">{selectedSuggestion.matchedJobDescriptionSnippet}</p>
+                </div>
+                <div className="rounded-2xl bg-[rgba(45,106,79,0.08)] p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--success)]">Supported by resume</p>
+                  <p className="mt-2 text-sm leading-7">{selectedSuggestion.supportLabel}</p>
+                </div>
+                <div className="rounded-2xl border border-[var(--line)] p-4">
+                  <label className="block" htmlFor={`manual-edit-${selectedSuggestion.id}`}>
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Manual edit</span>
+                  </label>
+                  <textarea
+                    id={`manual-edit-${selectedSuggestion.id}`}
+                    value={manualDrafts[selectedSuggestion.id] ?? ""}
+                    onChange={(event) =>
+                      setManualDrafts((current) => ({
+                        ...current,
+                        [selectedSuggestion.id]: event.target.value
+                      }))
+                    }
+                    className="mt-3 min-h-28 w-full rounded-2xl border border-[var(--line)] bg-white px-4 py-3 text-sm leading-7 outline-none"
+                  />
+                  <button type="button" className="button-secondary mt-3" onClick={handleSaveManualEdit}>
+                    Save manual edit
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" className="button-primary" onClick={() => updateSuggestionDecision(selectedSuggestion.id, "accepted")}>
+                  Accept change
+                </button>
+                <button type="button" className="button-secondary" onClick={() => updateSuggestionDecision(selectedSuggestion.id, "rejected")}>
+                  Reject change
+                </button>
+                <button type="button" className="button-secondary" onClick={() => updateSuggestionDecision(selectedSuggestion.id, "manual")}>
+                  Edit manually
+                </button>
+                <button type="button" className="button-secondary" onClick={() => updateSuggestionDecision(selectedSuggestion.id, "original")}>
+                  Restore original
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Score breakdown</p>
+              <div className="mt-4 space-y-3">
+                {session.scores.map((score) => (
+                  <MetricBar key={score.id} label={score.label} score={score.score} detail={score.detail} />
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-[var(--line)] bg-white p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Requirements not supported by your resume</p>
+              <div className="mt-4 space-y-3">
+                {session.gaps.map((gap) => (
+                  <div key={gap.name} className="rounded-2xl bg-[var(--surface-muted)] p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="font-semibold">{gap.name} not found</p>
+                      <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]">{gap.severity}</span>
+                    </div>
+                    <p className="muted mt-2 text-sm leading-6">{gap.nextStep}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+}

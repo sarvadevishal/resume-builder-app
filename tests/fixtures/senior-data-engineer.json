@@ -1,0 +1,6 @@
+{
+  "role": "Senior Data Engineer",
+  "resumeText": "Summary\nSenior data engineer with SQL, Python, dbt, Airflow, and warehouse modeling experience.\nSkills\nSQL\nPython\ndbt\nAirflow\nExperience\nOwned ELT pipelines and partnered with analysts on reusable data models.\nEducation\nB.S. in Computer Science",
+  "jobDescriptionText": "Senior Data Engineer needed. Must have SQL, Python, Airflow, dbt, and Kubernetes. Own orchestration and warehouse reliability.",
+  "expectedGaps": ["kubernetes"]
+}

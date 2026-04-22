@@ -1,0 +1,6 @@
+{
+  "role": "Analytics Engineer",
+  "resumeText": "Summary\nAnalytics engineer with dbt, SQL, and semantic layer experience.\nSkills\ndbt\nSQL\nLooker\nExperience\nBuilt tested dbt models and partnered with analytics stakeholders on metrics definitions.\nEducation\nB.A. in Economics",
+  "jobDescriptionText": "Analytics Engineer role. Must have dbt and SQL. Preferred: Snowflake. Build trusted metrics and semantic models.",
+  "expectedGaps": ["snowflake"]
+}

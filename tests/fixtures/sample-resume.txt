@@ -1,0 +1,18 @@
+Summary
+Data engineer with SQL, Python, Airflow, dbt, and Redshift experience.
+
+Skills
+SQL
+Python
+Airflow
+dbt
+Redshift
+Dimensional modeling
+
+Experience
+Built ELT pipelines in Python and SQL for finance reporting workloads.
+Maintained Redshift tables and improved data quality for executive dashboards.
+Partnered with analysts to define reusable transformation logic.
+
+Education
+B.S. in Information Systems
