@@ -47,4 +47,21 @@ describe("resume parser", () => {
     expect(extractedText).toContain("Jane Analyst");
     expect(extractedText).toContain("Built SQL dashboards");
   });
+
+  it("separates awards and publications instead of merging them into skills", () => {
+    const structuredResume = buildStructuredResume([
+      "Alex Candidate",
+      "Skills",
+      "Python, SQL, dbt, Snowflake",
+      "Achievements",
+      "Won quarterly engineering excellence award",
+      "Publication",
+      "Object detection using Hausdorff distance"
+    ].join("\n"));
+
+    expect(structuredResume.sections.map((section) => section.name)).toEqual(["Contact", "Skills", "Awards", "Publications"]);
+    expect(structuredResume.sections.find((section) => section.name === "Skills").items).toEqual(["Python, SQL, dbt, Snowflake"]);
+    expect(structuredResume.sections.find((section) => section.name === "Awards").items).toEqual(["Won quarterly engineering excellence award"]);
+    expect(structuredResume.sections.find((section) => section.name === "Publications").items).toEqual(["Object detection using Hausdorff distance"]);
+  });
 });

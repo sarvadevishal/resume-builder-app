@@ -98,6 +98,12 @@ describe("export service", () => {
     );
   });
 
+  it("removes generic rewrite filler from exported text", () => {
+    expect(sanitizeText("Aurora Engineering - Data Scientist, with clearer emphasis on ownership and scope.")).toBe(
+      "Aurora Engineering - Data Scientist"
+    );
+  });
+
   it("suppresses empty sections and applies standard ordering", () => {
     const prepared = prepareResumeExport({
       structuredResume,

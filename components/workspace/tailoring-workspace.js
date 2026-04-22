@@ -209,20 +209,6 @@ export function TailoringWorkspace({ session }) {
               </div>
             ))}
           </div>
-
-          <div className="mt-6">
-            <ExportPanel
-              structuredResume={finalStructuredResume}
-              sessionContext={{
-                company: session.company,
-                role: session.role,
-                jobDescriptionAnalysis: session.jobDescriptionAnalysis
-              }}
-              onExport={handleExport}
-              isExporting={isExporting}
-            />
-          </div>
-
           <div className="mt-6">
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Change queue</p>
             <div className="mt-3 space-y-3" role="tablist" aria-label="Tailoring suggestions">
@@ -375,6 +361,19 @@ export function TailoringWorkspace({ session }) {
             </div>
           </div>
         </section>
+      </div>
+
+      <div className="premium-panel">
+        <ExportPanel
+          structuredResume={finalStructuredResume}
+          sessionContext={{
+            company: session.company,
+            role: session.role,
+            jobDescriptionAnalysis: session.jobDescriptionAnalysis
+          }}
+          onExport={handleExport}
+          isExporting={isExporting}
+        />
       </div>
     </div>
   );
