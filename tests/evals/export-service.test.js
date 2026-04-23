@@ -138,6 +138,31 @@ describe("export service", () => {
     expect(technicalSkills.items.length).toBeLessThanOrEqual(2);
   });
 
+  it("preserves grouped skill labels instead of flattening them into token soup", () => {
+    const prepared = prepareResumeExport({
+      structuredResume: {
+        sections: [
+          {
+            name: "Skills",
+            items: [
+              "Languages & Tools: Python, SQL, Spark, Docker, AWS",
+              "Frameworks & Libraries: Pandas, NumPy, Scikit-Learn"
+            ]
+          }
+        ]
+      },
+      exportOptions: {
+        mode: "ats"
+      },
+      sessionContext
+    });
+
+    expect(prepared.exportDocument.sections[0].items.map((item) => item.text)).toEqual([
+      "Languages & Tools: Python, SQL, Spark, Docker, AWS",
+      "Frameworks & Libraries: Pandas, NumPy, Scikit-Learn"
+    ]);
+  });
+
   it("normalizes month names and enforces ATS-safe template in ATS mode", () => {
     const prepared = prepareResumeExport({
       structuredResume,
