@@ -12,7 +12,8 @@ export async function POST(request) {
 
   const deletionPlan = buildDeletionPlan({
     rawFileName: body.rawFileName || "inline-text",
-    structuredResumeSaved: false
+    structuredResumeSaved: false,
+    deleteRawFile: body.deleteRawUploads !== false
   });
 
   return NextResponse.json({

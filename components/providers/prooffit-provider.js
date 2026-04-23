@@ -119,6 +119,10 @@ function getPersistenceKey(email) {
   return `${storageKey}:${email.trim().toLowerCase()}`;
 }
 
+function getSessionPersistenceKey(email) {
+  return `${storageKey}:session:${email.trim().toLowerCase()}`;
+}
+
 function readBrowserCookie(name) {
   if (typeof document === "undefined") {
     return "";
@@ -152,20 +156,113 @@ function buildPersistedSnapshot(state) {
   };
 }
 
+function clearPersistedState(email) {
+  if (typeof window === "undefined" || !email?.trim()) {
+    return;
+  }
+
+  try {
+    window.localStorage.removeItem(getPersistenceKey(email));
+    window.sessionStorage.removeItem(getSessionPersistenceKey(email));
+  } catch {
+    // Ignore storage cleanup failures.
+  }
+}
+
+function sanitizeStructuredSection(section) {
+  if (!section?.name || !Array.isArray(section.items)) {
+    return null;
+  }
+
+  return {
+    name: String(section.name),
+    items: section.items.filter((item) => typeof item === "string" && item.trim())
+  };
+}
+
+function sanitizeStructuredResume(structuredResume) {
+  if (!structuredResume || !Array.isArray(structuredResume.sections)) {
+    return null;
+  }
+
+  const sections = structuredResume.sections.map(sanitizeStructuredSection).filter(Boolean);
+
+  if (!sections.length) {
+    return null;
+  }
+
+  return {
+    ...structuredResume,
+    sections
+  };
+}
+
+function sanitizeTailoringSession(tailoringSession) {
+  if (!tailoringSession || !Array.isArray(tailoringSession.suggestions) || !sanitizeStructuredResume(tailoringSession.structuredResume)) {
+    return null;
+  }
+
+  return {
+    ...tailoringSession,
+    structuredResume: sanitizeStructuredResume(tailoringSession.structuredResume),
+    suggestions: tailoringSession.suggestions
+      .filter((suggestion) => typeof suggestion?.originalBullet === "string" && typeof suggestion?.suggestedBullet === "string")
+      .map((suggestion, index) => ({
+        ...suggestion,
+        id: suggestion.id || `persisted-suggestion-${index + 1}`,
+        decision: suggestion.decision || suggestion.defaultDecision || "accepted",
+        manualBullet: suggestion.manualBullet || suggestion.suggestedBullet
+      }))
+  };
+}
+
+function sanitizePersistedSnapshot(snapshot) {
+  if (!snapshot || typeof snapshot !== "object") {
+    return null;
+  }
+
+  const resumeUpload = snapshot.resumeUpload || {};
+  const jobDescription = snapshot.jobDescription || {};
+
+  return {
+    ...snapshot,
+    resumeUpload: {
+      rawFileName: typeof resumeUpload.rawFileName === "string" ? resumeUpload.rawFileName : "",
+      extractedText: typeof resumeUpload.extractedText === "string" ? resumeUpload.extractedText : "",
+      structuredResume: sanitizeStructuredResume(resumeUpload.structuredResume),
+      atsWarnings: Array.isArray(resumeUpload.atsWarnings) ? resumeUpload.atsWarnings : [],
+      deletionPlan: resumeUpload.deletionPlan || null,
+      auditLogPreview: Array.isArray(resumeUpload.auditLogPreview) ? resumeUpload.auditLogPreview : []
+    },
+    jobDescription: {
+      company: typeof jobDescription.company === "string" ? jobDescription.company : "",
+      role: typeof jobDescription.role === "string" ? jobDescription.role : "",
+      text: typeof jobDescription.text === "string" ? jobDescription.text : "",
+      analysis: jobDescription.analysis || null
+    },
+    tailoringSession: sanitizeTailoringSession(snapshot.tailoringSession),
+    versionHistory: Array.isArray(snapshot.versionHistory)
+      ? snapshot.versionHistory.filter((version) => version?.id && version?.company && version?.role)
+      : [],
+    auditEvents: Array.isArray(snapshot.auditEvents) ? snapshot.auditEvents : []
+  };
+}
+
 function readPersistedSnapshot(email) {
   if (typeof window === "undefined" || !email?.trim()) {
     return null;
   }
 
   try {
-    const rawValue = window.localStorage.getItem(getPersistenceKey(email));
+    const rawValue = window.sessionStorage.getItem(getSessionPersistenceKey(email)) || window.localStorage.getItem(getPersistenceKey(email));
 
     if (!rawValue) {
       return null;
     }
 
     const parsedValue = JSON.parse(rawValue);
-    return parsedValue?.version === persistenceVersion ? parsedValue.state : parsedValue;
+    const snapshot = parsedValue?.version === persistenceVersion ? parsedValue.state : parsedValue;
+    return sanitizePersistedSnapshot(snapshot);
   } catch {
     return null;
   }
@@ -239,24 +336,35 @@ export function ProofFitProvider({ children }) {
         return;
       }
 
-      const {
-        data: { user }
-      } = await supabaseClient.auth.getUser();
+      try {
+        const {
+          data: { user }
+        } = await supabaseClient.auth.getUser();
 
-      if (!isMounted) {
-        return;
+        if (!isMounted) {
+          return;
+        }
+
+        if (user?.email) {
+          const nextUser = normalizeCurrentUser(user);
+          document.cookie = `prooffit_demo_session=${encodeURIComponent(nextUser.email)}; path=/; max-age=604800; samesite=lax`;
+          setState((current) => ({
+            ...buildStateForUser(nextUser, readPersistedSnapshot(nextUser.email), current.authProvider || "supabase"),
+            authMessage: current.authMessage
+          }));
+        }
+      } catch {
+        if (isMounted) {
+          setState((current) => ({
+            ...current,
+            authMessage: current.authMessage || "We could not refresh the current session. Please sign in again."
+          }));
+        }
+      } finally {
+        if (isMounted) {
+          setIsHydratingAuth(false);
+        }
       }
-
-      if (user?.email) {
-        const nextUser = normalizeCurrentUser(user);
-        document.cookie = `prooffit_demo_session=${encodeURIComponent(nextUser.email)}; path=/; max-age=604800; samesite=lax`;
-        setState((current) => ({
-          ...buildStateForUser(nextUser, readPersistedSnapshot(nextUser.email), current.authProvider || "supabase"),
-          authMessage: current.authMessage
-        }));
-      }
-
-      setIsHydratingAuth(false);
     }
 
     hydrateAuth();
@@ -275,6 +383,7 @@ export function ProofFitProvider({ children }) {
           authMessage: current.authMessage
         }));
       } else {
+        clearPersistedState(state.currentUser?.email);
         document.cookie = "prooffit_demo_session=; path=/; max-age=0; samesite=lax";
         setState((current) => ({
           ...createDefaultState(),
@@ -287,7 +396,7 @@ export function ProofFitProvider({ children }) {
       isMounted = false;
       authSubscription?.data.subscription.unsubscribe();
     };
-  }, [supabaseClient]);
+  }, [state.currentUser?.email, supabaseClient]);
 
   useEffect(() => {
     if (typeof window === "undefined" || isHydratingAuth || !state.currentUser?.email) {
@@ -295,13 +404,18 @@ export function ProofFitProvider({ children }) {
     }
 
     try {
-      window.localStorage.setItem(
-        getPersistenceKey(state.currentUser.email),
-        JSON.stringify({
-          version: persistenceVersion,
-          state: buildPersistedSnapshot(state)
-        })
-      );
+      const persistedValue = JSON.stringify({
+        version: persistenceVersion,
+        state: buildPersistedSnapshot(state)
+      });
+
+      window.sessionStorage.setItem(getSessionPersistenceKey(state.currentUser.email), persistedValue);
+
+      if (state.privacyPreferences.saveStructuredResume) {
+        window.localStorage.setItem(getPersistenceKey(state.currentUser.email), persistedValue);
+      } else {
+        window.localStorage.removeItem(getPersistenceKey(state.currentUser.email));
+      }
     } catch {
       // Ignore client persistence failures and keep the in-memory workflow usable.
     }
@@ -403,15 +517,23 @@ export function ProofFitProvider({ children }) {
   }
 
   async function signOut() {
+    const currentEmail = state.currentUser?.email;
+    let signOutWarning = "";
+
     if (supabaseClient) {
-      await supabaseClient.auth.signOut();
+      try {
+        await supabaseClient.auth.signOut();
+      } catch {
+        signOutWarning = "Signed out locally. Refresh the page if your hosted session still appears active.";
+      }
     }
 
     document.cookie = "prooffit_demo_session=; path=/; max-age=0; samesite=lax";
+    clearPersistedState(currentEmail);
     resetActivityState();
     setState((current) => ({
       ...createDefaultState(),
-      authMessage: "Signed out successfully.",
+      authMessage: signOutWarning || "Signed out successfully.",
       auditEvents: appendAuditEvent(current, "Signed out successfully.")
     }));
   }
@@ -428,6 +550,7 @@ export function ProofFitProvider({ children }) {
     }
     formData.append("text", text || "");
     formData.append("saveStructuredData", String(saveStructuredData));
+    formData.append("deleteRawUploads", String(state.privacyPreferences.deleteRawUploads));
 
     try {
       const response = await fetchWithRetry(
@@ -697,7 +820,15 @@ export function ProofFitProvider({ children }) {
 
       setState((current) => ({
         ...current,
-        versionHistory: [buildVersionFromSession(current.tailoringSession), ...current.versionHistory].slice(0, 12),
+        versionHistory: [
+          buildVersionFromSession({
+            session: current.tailoringSession,
+            resumeUpload: current.resumeUpload,
+            jobDescription: current.jobDescription,
+            privacyPreferences: current.privacyPreferences
+          }),
+          ...current.versionHistory
+        ].slice(0, 12),
         lastExport: {
           format,
           mode: exportOptions.mode || "ats",
@@ -775,7 +906,8 @@ export function ProofFitProvider({ children }) {
       result = {
         deletionPlan: buildDeletionPlan({
           rawFileName: state.resumeUpload.rawFileName || "pasted-resume.txt",
-          structuredResumeSaved: false
+          structuredResumeSaved: false,
+          deleteRawFile: state.privacyPreferences.deleteRawUploads
         }),
         auditEvents: [
           createAuditEvent("raw_file_deleted", { rawFileName: state.resumeUpload.rawFileName || "pasted-resume.txt" }),
@@ -838,6 +970,10 @@ export function ProofFitProvider({ children }) {
       return;
     }
 
+    if (!state.currentUser?.email) {
+      throw new Error("Sign in before starting checkout.");
+    }
+
     const response = await fetchWithRetry("/api/stripe/checkout", {
       method: "POST",
       headers: {
@@ -864,15 +1000,28 @@ export function ProofFitProvider({ children }) {
       return;
     }
 
-    setState((current) => ({
-      ...current,
-      jobDescription: {
-        ...current.jobDescription,
-        company: restored.company,
-        role: restored.role
-      },
-      auditEvents: appendAuditEvent(current, `Restored the metadata for ${restored.role} at ${restored.company}.`)
-    }));
+    setState((current) => {
+      if (!restored.snapshot) {
+        return {
+          ...current,
+          jobDescription: {
+            ...current.jobDescription,
+            company: restored.company,
+            role: restored.role
+          },
+          auditEvents: appendAuditEvent(current, `Restored the metadata for ${restored.role} at ${restored.company}.`)
+        };
+      }
+
+      return {
+        ...current,
+        resumeUpload: restored.snapshot.resumeUpload,
+        jobDescription: restored.snapshot.jobDescription,
+        tailoringSession: restored.snapshot.tailoringSession,
+        lastExport: current.lastExport,
+        auditEvents: appendAuditEvent(current, `Restored the saved workspace for ${restored.role} at ${restored.company}.`)
+      };
+    });
   }
 
   const value = {

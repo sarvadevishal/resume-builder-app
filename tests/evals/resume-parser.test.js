@@ -73,6 +73,12 @@ describe("resume parser", () => {
     expect(extractedText).toContain("Built dbt models for finance reporting");
   });
 
+  it("rejects unsupported resume file types with a clear message", async () => {
+    const file = new File([Buffer.from("not a resume")], "resume.png", { type: "image/png" });
+
+    await expect(extractResumeText(file)).rejects.toThrow("Unsupported file type. Please upload a PDF, DOCX, or plain-text resume.");
+  });
+
   it("separates awards and publications instead of merging them into skills", () => {
     const structuredResume = buildStructuredResume([
       "Alex Candidate",

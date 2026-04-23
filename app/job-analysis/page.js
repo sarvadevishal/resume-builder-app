@@ -115,9 +115,15 @@ export default function JobAnalysisPage() {
                 ? "Open ready workspace"
                 : "Generate tailoring session"}
           </button>
-          <Link href="/workspace" className={hasReadySession ? "button-secondary" : "button-secondary"}>
-            {hasReadySession ? "Review workspace" : "Open workspace"}
-          </Link>
+          {hasReadySession ? (
+            <Link href="/workspace" className="button-secondary">
+              Review workspace
+            </Link>
+          ) : (
+            <button type="button" className="button-secondary opacity-60" disabled aria-disabled="true">
+              Open workspace
+            </button>
+          )}
         </div>
       </SectionCard>
 

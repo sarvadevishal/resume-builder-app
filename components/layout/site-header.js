@@ -7,10 +7,15 @@ import { useState } from "react";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
 
 const navItems = [
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/upload", label: "Resume upload" },
+  { href: "/job-analysis", label: "JD analysis" },
   { href: "/workspace", label: "Workspace" },
   { href: "/ats-preview", label: "ATS Preview" },
+  { href: "/history", label: "History" },
   { href: "/pricing", label: "Pricing" },
-  { href: "/settings", label: "Privacy" }
+  { href: "/settings", label: "Privacy" },
+  { href: "/admin", label: "Admin" }
 ];
 
 export function SiteHeader() {

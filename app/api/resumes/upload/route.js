@@ -33,7 +33,8 @@ export async function POST(request) {
       atsWarnings: atsResult.warnings,
       deletionPlan: buildDeletionPlan({
         rawFileName: file?.name ?? "inline-text",
-        structuredResumeSaved: saveStructuredData
+        structuredResumeSaved: saveStructuredData,
+        deleteRawFile: formData.get("deleteRawUploads") !== "false"
       }),
       auditLogPreview: [
         createAuditEvent("resume_uploaded", { fileName: file?.name ?? "inline-text" }),
@@ -45,7 +46,7 @@ export async function POST(request) {
       {
         error: error.message || "Resume upload failed."
       },
-      { status: 500 }
+      { status: /not supported|unsupported|could not extract/i.test(error.message || "") ? 400 : 500 }
     );
   }
 }

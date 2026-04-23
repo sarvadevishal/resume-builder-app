@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { SectionCard } from "@/components/ui/section-card";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
 
+function sanitizeNextPath(nextPath) {
+  return nextPath?.startsWith("/") ? nextPath : "/dashboard";
+}
+
 export default function AuthPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -14,7 +18,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState(searchParams.get("error") || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const nextPath = searchParams.get("next") || "/dashboard";
+  const nextPath = sanitizeNextPath(searchParams.get("next"));
 
   async function handleSubmit(event) {
     event.preventDefault();

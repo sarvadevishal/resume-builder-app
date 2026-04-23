@@ -6,8 +6,7 @@ import { AppShell } from "@/components/layout/app-shell";
 import { SectionCard } from "@/components/ui/section-card";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
 
-export default function UploadPage() {
-  const { state, uploadResume, clearResumeData } = useProofFitApp();
+function UploadForm({ state, uploadResume, clearResumeData }) {
   const [resumeText, setResumeText] = useState(state.resumeUpload.extractedText);
   const [selectedFile, setSelectedFile] = useState(null);
   const [saveStructuredData, setSaveStructuredData] = useState(state.privacyPreferences.saveStructuredResume);
@@ -63,9 +62,8 @@ export default function UploadPage() {
   }
 
   return (
-    <AppShell title="Resume upload" description="Import a PDF or DOCX, extract structured sections, and decide whether the original file should survive the session.">
-      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
-        <SectionCard title="Upload source resume" eyebrow="Step 1">
+    <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
+      <SectionCard title="Upload source resume" eyebrow="Step 1">
           <div className="mt-6 rounded-[2rem] border border-dashed border-[rgba(37,99,235,0.28)] bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(239,246,255,0.9))] p-8 text-center">
             <p className="text-lg font-semibold">Drop a PDF or DOCX file here</p>
             <p className="muted mt-3 text-sm">Raw files are deleted after extraction by default unless the user opts in to save them.</p>
@@ -113,13 +111,15 @@ export default function UploadPage() {
             <button type="button" className="button-secondary" onClick={handleClearAll}>
               Clear current upload
             </button>
-            <Link
-              href={state.resumeUpload.structuredResume ? "/job-analysis" : "#"}
-              className={`button-secondary ${state.resumeUpload.structuredResume ? "" : "pointer-events-none opacity-60"}`}
-              aria-disabled={!state.resumeUpload.structuredResume}
-            >
-              Continue to JD analysis
-            </Link>
+            {state.resumeUpload.structuredResume ? (
+              <Link href="/job-analysis" className="button-secondary">
+                Continue to JD analysis
+              </Link>
+            ) : (
+              <button type="button" className="button-secondary opacity-60" disabled aria-disabled="true">
+                Continue to JD analysis
+              </button>
+            )}
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -136,49 +136,63 @@ export default function UploadPage() {
               </p>
             </div>
           </div>
-        </SectionCard>
+      </SectionCard>
 
-        <div className="space-y-6">
-          <SectionCard title="Extracted structure preview" eyebrow="Step 2">
-            {(state.resumeUpload.structuredResume?.sections || []).length ? (
-              <div className="mt-6 space-y-4">
-                {(state.resumeUpload.structuredResume?.sections || []).map((section) => (
-                  <div key={section.name} className="info-tile">
-                    <p className="font-semibold">{section.name}</p>
-                    <p className="muted mt-1 text-sm">{section.items.length} items detected</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--line)] bg-white/80 px-5 py-6 text-sm font-semibold text-[var(--ink-soft)]">
-                Upload a resume or paste text to see the structured preview here.
-              </div>
-            )}
-
-            {state.resumeUpload.deletionPlan ? (
-              <div className="mt-6 rounded-[1.5rem] bg-[var(--surface-muted)] p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Deletion plan</p>
-                <p className="mt-3 text-sm leading-7">{state.resumeUpload.deletionPlan.message}</p>
-              </div>
-            ) : null}
-          </SectionCard>
-
-          <div className="premium-panel-dark">
-            <p className="text-sm uppercase tracking-[0.2em] text-white/60">Upload promise</p>
-            <div className="mt-5 space-y-3">
-              {[
-                "No hidden paywall before a meaningful result",
-                "Structured extraction stays reviewable",
-                "Privacy choices stay visible during import"
-              ].map((item) => (
-                <div key={item} className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold">
-                  {item}
+      <div className="space-y-6">
+        <SectionCard title="Extracted structure preview" eyebrow="Step 2">
+          {(state.resumeUpload.structuredResume?.sections || []).length ? (
+            <div className="mt-6 space-y-4">
+              {(state.resumeUpload.structuredResume?.sections || []).map((section) => (
+                <div key={section.name} className="info-tile">
+                  <p className="font-semibold">{section.name}</p>
+                  <p className="muted mt-1 text-sm">{section.items.length} items detected</p>
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="mt-6 rounded-[1.5rem] border border-dashed border-[var(--line)] bg-white/80 px-5 py-6 text-sm font-semibold text-[var(--ink-soft)]">
+              Upload a resume or paste text to see the structured preview here.
+            </div>
+          )}
+
+          {state.resumeUpload.deletionPlan ? (
+            <div className="mt-6 rounded-[1.5rem] bg-[var(--surface-muted)] p-5">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--accent)]">Deletion plan</p>
+              <p className="mt-3 text-sm leading-7">{state.resumeUpload.deletionPlan.message}</p>
+            </div>
+          ) : null}
+        </SectionCard>
+
+        <div className="premium-panel-dark">
+          <p className="text-sm uppercase tracking-[0.2em] text-white/60">Upload promise</p>
+          <div className="mt-5 space-y-3">
+            {[
+              "No hidden paywall before a meaningful result",
+              "Structured extraction stays reviewable",
+              "Privacy choices stay visible during import"
+            ].map((item) => (
+              <div key={item} className="rounded-[1.25rem] border border-white/10 bg-white/8 px-4 py-3 text-sm font-semibold">
+                {item}
+              </div>
+            ))}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+export default function UploadPage() {
+  const { state, uploadResume, clearResumeData } = useProofFitApp();
+  const formKey = [
+    state.resumeUpload.rawFileName || "empty",
+    state.resumeUpload.extractedText || "blank",
+    state.privacyPreferences.saveStructuredResume ? "save" : "temp"
+  ].join("::");
+
+  return (
+    <AppShell title="Resume upload" description="Import a PDF or DOCX, extract structured sections, and decide whether the original file should survive the session.">
+      <UploadForm key={formKey} state={state} uploadResume={uploadResume} clearResumeData={clearResumeData} />
     </AppShell>
   );
 }

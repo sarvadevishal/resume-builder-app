@@ -45,6 +45,18 @@ test("protected routes redirect anonymous users to auth", async ({ page }) => {
   await expect(page).toHaveURL(/auth\?next=%2Fworkspace/);
 });
 
+test("mobile navigation exposes the full authenticated workflow", async ({ page }) => {
+  await signIn(page, { email: "mobile-nav-user@prooffit.ai" });
+  await page.setViewportSize({ width: 900, height: 1200 });
+  await page.getByRole("button", { name: "Menu" }).click();
+
+  await expect(page.getByRole("link", { name: "Dashboard" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Resume upload" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "JD analysis" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "History" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Admin" })).toBeVisible();
+});
+
 test("email sign-in and dashboard navigation work", async ({ page }) => {
   await signIn(page);
   await page.getByRole("link", { name: "Open workspace" }).click();
@@ -67,8 +79,7 @@ test("google auth explains configuration requirements when Supabase is not confi
 
 test("resume upload, JD analysis, workspace, export, settings, and history work together", async ({ page }) => {
   await signIn(page);
-
-  await page.getByRole("link", { name: /Resume upload/i }).click();
+  await page.goto("/upload");
   const fileChooserPromise = page.waitForEvent("filechooser");
   await page.getByRole("button", { name: "Choose file" }).click();
   const fileChooser = await fileChooserPromise;
@@ -151,6 +162,7 @@ test("pasted resume text can be processed and cleared", async ({ page }) => {
 
   await page.getByRole("button", { name: "Clear current upload" }).click();
   await expect(page.getByText(/Upload a resume or paste text to see the structured preview here/i)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Continue to JD analysis" })).toBeDisabled();
 });
 
 test("job analysis generate CTA recovers into a ready workspace state", async ({ page }) => {
@@ -184,6 +196,12 @@ test("job analysis generate CTA recovers into a ready workspace state", async ({
 
   await page.goto("/job-analysis");
   await expect(page.getByRole("button", { name: "Open ready workspace" })).toBeVisible();
+});
+
+test("job analysis keeps workspace closed until a session is ready", async ({ page }) => {
+  await signIn(page, { email: "workspace-link-user@prooffit.ai" });
+  await page.goto("/job-analysis");
+  await expect(page.getByRole("button", { name: "Open workspace" })).toBeDisabled();
 });
 
 test("workspace tailor resume CTA only enables when prerequisites are ready", async ({ page }) => {
