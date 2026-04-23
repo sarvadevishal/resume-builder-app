@@ -14,6 +14,12 @@ import { createSupabaseBrowserClient } from "@/lib/services/supabase/browser";
 
 const ProofFitAppContext = createContext(null);
 const persistenceVersion = 1;
+const defaultActivityState = {
+  isUploadingResume: false,
+  isAnalyzingJobDescription: false,
+  isGeneratingTailoringSession: false,
+  isExportingResume: false
+};
 
 function appendAuditEvent(state, message) {
   return [
@@ -61,25 +67,43 @@ function delay(milliseconds) {
   });
 }
 
-async function fetchWithRetry(input, init, { retryStatuses = [404, 502, 503, 504], retries = 1, retryDelayMs = 350 } = {}) {
+async function fetchWithRetry(
+  input,
+  init,
+  { retryStatuses = [404, 502, 503, 504], retries = 1, retryDelayMs = 350, timeoutMs = 20000 } = {}
+) {
   let lastResponse = null;
   let lastError = null;
 
   for (let attempt = 0; attempt <= retries; attempt += 1) {
+    const controller = new AbortController();
+    const timeoutHandle = window.setTimeout(() => controller.abort(new Error("Request timed out.")), timeoutMs);
+
     try {
-      const response = await fetch(input, init);
+      const response = await fetch(input, {
+        ...init,
+        signal: controller.signal
+      });
       lastResponse = response;
 
       if (!retryStatuses.includes(response.status) || attempt === retries) {
+        window.clearTimeout(timeoutHandle);
         return response;
       }
     } catch (error) {
       lastError = error;
+      window.clearTimeout(timeoutHandle);
 
       if (attempt === retries) {
+        if (error?.name === "AbortError") {
+          throw new Error("The request took too long. Please try again.");
+        }
+
         throw error;
       }
     }
+
+    window.clearTimeout(timeoutHandle);
 
     await delay(retryDelayMs);
   }
@@ -181,6 +205,7 @@ function buildStateForUser(user, persistedSnapshot, fallbackAuthProvider) {
 export function ProofFitProvider({ children }) {
   const [state, setState] = useState(createDefaultState);
   const [isHydratingAuth, setIsHydratingAuth] = useState(true);
+  const [activity, setActivity] = useState(defaultActivityState);
   const supabaseClient = useMemo(() => createSupabaseBrowserClient(), []);
   const supportsSupabaseAuth = Boolean(supabaseClient);
 
@@ -384,6 +409,11 @@ export function ProofFitProvider({ children }) {
   }
 
   async function uploadResume({ file, text, saveStructuredData }) {
+    setActivity((current) => ({
+      ...current,
+      isUploadingResume: true
+    }));
+
     const formData = new FormData();
     if (file) {
       formData.append("file", file);
@@ -391,37 +421,50 @@ export function ProofFitProvider({ children }) {
     formData.append("text", text || "");
     formData.append("saveStructuredData", String(saveStructuredData));
 
-    const response = await fetchWithRetry("/api/resumes/upload", {
-      method: "POST",
-      body: formData
-    });
+    try {
+      const response = await fetchWithRetry(
+        "/api/resumes/upload",
+        {
+          method: "POST",
+          body: formData
+        },
+        {
+          timeoutMs: 30000
+        }
+      );
 
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, "Resume upload failed."));
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, "Resume upload failed."));
+      }
+
+      const result = await response.json();
+
+      setState((current) => ({
+        ...current,
+        resumeUpload: {
+          rawFileName: file?.name || "pasted-resume.txt",
+          extractedText: result.extractedText,
+          structuredResume: result.structuredResume,
+          atsWarnings: result.atsWarnings,
+          deletionPlan: result.deletionPlan,
+          auditLogPreview: result.auditLogPreview
+        },
+        tailoringSession: null,
+        lastExport: null,
+        privacyPreferences: {
+          ...current.privacyPreferences,
+          saveStructuredResume: saveStructuredData
+        },
+        auditEvents: appendAuditEvent(current, `Resume processed from ${file?.name || "pasted text"} with ${result.structuredResume.sections.length} detected sections.`)
+      }));
+
+      return result;
+    } finally {
+      setActivity((current) => ({
+        ...current,
+        isUploadingResume: false
+      }));
     }
-
-    const result = await response.json();
-
-    setState((current) => ({
-      ...current,
-      resumeUpload: {
-        rawFileName: file?.name || "pasted-resume.txt",
-        extractedText: result.extractedText,
-        structuredResume: result.structuredResume,
-        atsWarnings: result.atsWarnings,
-        deletionPlan: result.deletionPlan,
-        auditLogPreview: result.auditLogPreview
-      },
-      tailoringSession: null,
-      lastExport: null,
-      privacyPreferences: {
-        ...current.privacyPreferences,
-        saveStructuredResume: saveStructuredData
-      },
-      auditEvents: appendAuditEvent(current, `Resume processed from ${file?.name || "pasted text"} with ${result.structuredResume.sections.length} detected sections.`)
-    }));
-
-    return result;
   }
 
   async function analyzeJobDescription({ text, company, role }) {
@@ -429,36 +472,54 @@ export function ProofFitProvider({ children }) {
       throw new Error("Paste a job description first.");
     }
 
-    const response = await fetchWithRetry("/api/job-descriptions/analyze", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        jobDescriptionText: text
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, "Job description analysis failed."));
-    }
-
-    const analysis = await response.json();
-
-    setState((current) => ({
+    setActivity((current) => ({
       ...current,
-      jobDescription: {
-        company: company?.trim() || current.jobDescription.company,
-        role: role?.trim() || current.jobDescription.role,
-        text,
-        analysis
-      },
-      tailoringSession: null,
-      lastExport: null,
-      auditEvents: appendAuditEvent(current, `Analyzed a target job description for ${role || current.jobDescription.role || "the selected role"}.`)
+      isAnalyzingJobDescription: true
     }));
 
-    return analysis;
+    try {
+      const response = await fetchWithRetry(
+        "/api/job-descriptions/analyze",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            jobDescriptionText: text
+          })
+        },
+        {
+          timeoutMs: 15000
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, "Job description analysis failed."));
+      }
+
+      const analysis = await response.json();
+
+      setState((current) => ({
+        ...current,
+        jobDescription: {
+          company: company?.trim() || current.jobDescription.company,
+          role: role?.trim() || current.jobDescription.role,
+          text,
+          analysis
+        },
+        tailoringSession: null,
+        lastExport: null,
+        auditEvents: appendAuditEvent(current, `Analyzed a target job description for ${role || current.jobDescription.role || "the selected role"}.`)
+      }));
+
+      return analysis;
+    } finally {
+      setActivity((current) => ({
+        ...current,
+        isAnalyzingJobDescription: false
+      }));
+    }
   }
 
   async function generateTailoringSession() {
@@ -474,22 +535,34 @@ export function ProofFitProvider({ children }) {
       throw new Error("Analyze the job description before generating a tailoring session.");
     }
 
-    const response = await fetchWithRetry("/api/tailoring/sessions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        structuredResume: state.resumeUpload.structuredResume,
-        jobDescriptionText: state.jobDescription.text,
-        company: state.jobDescription.company,
-        role: state.jobDescription.role
-      })
-    });
+    setActivity((current) => ({
+      ...current,
+      isGeneratingTailoringSession: true
+    }));
 
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, "Tailoring session generation failed."));
-    }
+    try {
+      const response = await fetchWithRetry(
+        "/api/tailoring/sessions",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            structuredResume: state.resumeUpload.structuredResume,
+            jobDescriptionText: state.jobDescription.text,
+            company: state.jobDescription.company,
+            role: state.jobDescription.role
+          })
+        },
+        {
+          timeoutMs: 45000
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, "Tailoring session generation failed."));
+      }
 
       const session = await response.json();
       const normalizedSession = {
@@ -501,13 +574,19 @@ export function ProofFitProvider({ children }) {
         }))
       };
 
-    setState((current) => ({
-      ...current,
-      tailoringSession: normalizedSession,
-      auditEvents: appendAuditEvent(current, `Generated proof-backed suggestions for ${session.role} at ${session.company}.`)
-    }));
+      setState((current) => ({
+        ...current,
+        tailoringSession: normalizedSession,
+        auditEvents: appendAuditEvent(current, `Generated proof-backed suggestions for ${session.role} at ${session.company}.`)
+      }));
 
-    return normalizedSession;
+      return normalizedSession;
+    } finally {
+      setActivity((current) => ({
+        ...current,
+        isGeneratingTailoringSession: false
+      }));
+    }
   }
 
   function updateSuggestionDecision(id, decision) {
@@ -552,51 +631,69 @@ export function ProofFitProvider({ children }) {
       throw new Error("There is no tailored resume ready to export.");
     }
 
+    setActivity((current) => ({
+      ...current,
+      isExportingResume: true
+    }));
+
     const exportOptions = typeof input === "string" ? { format: input } : input || {};
     const format = exportOptions.format || "pdf";
 
-    const response = await fetchWithRetry("/api/exports", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        format,
-        exportOptions,
-        structuredResume: finalStructuredResume,
-        sessionContext: {
-          company: state.jobDescription.company,
-          role: state.jobDescription.role,
-          jobDescriptionAnalysis: state.jobDescription.analysis
+    try {
+      const response = await fetchWithRetry(
+        "/api/exports",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            format,
+            exportOptions,
+            structuredResume: finalStructuredResume,
+            sessionContext: {
+              company: state.jobDescription.company,
+              role: state.jobDescription.role,
+              jobDescriptionAnalysis: state.jobDescription.analysis
+            }
+          })
+        },
+        {
+          timeoutMs: 30000
         }
-      })
-    });
+      );
 
-    if (!response.ok) {
-      throw new Error(await readErrorMessage(response, "Export failed."));
+      if (!response.ok) {
+        throw new Error(await readErrorMessage(response, "Export failed."));
+      }
+
+      const blob = await response.blob();
+      const extension = format === "docx" ? "docx" : format === "doc" ? "doc" : "pdf";
+      const objectUrl = window.URL.createObjectURL(blob);
+      const downloadLink = document.createElement("a");
+      downloadLink.href = objectUrl;
+      downloadLink.download = `prooffit-${slugifyFragment(state.jobDescription.company, "target-company")}-${slugifyFragment(state.jobDescription.role, "target-role")}.${extension}`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      downloadLink.remove();
+      window.URL.revokeObjectURL(objectUrl);
+
+      setState((current) => ({
+        ...current,
+        versionHistory: [buildVersionFromSession(current.tailoringSession), ...current.versionHistory].slice(0, 12),
+        lastExport: {
+          format,
+          mode: exportOptions.mode || "ats",
+          exportedAt: new Date().toLocaleString("en-US")
+        },
+        auditEvents: appendAuditEvent(current, `Exported the current resume as ${extension.toUpperCase()}.`)
+      }));
+    } finally {
+      setActivity((current) => ({
+        ...current,
+        isExportingResume: false
+      }));
     }
-
-    const blob = await response.blob();
-    const extension = format === "docx" ? "docx" : format === "doc" ? "doc" : "pdf";
-    const objectUrl = window.URL.createObjectURL(blob);
-    const downloadLink = document.createElement("a");
-    downloadLink.href = objectUrl;
-    downloadLink.download = `prooffit-${slugifyFragment(state.jobDescription.company, "target-company")}-${slugifyFragment(state.jobDescription.role, "target-role")}.${extension}`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-    window.URL.revokeObjectURL(objectUrl);
-
-    setState((current) => ({
-      ...current,
-      versionHistory: [buildVersionFromSession(current.tailoringSession), ...current.versionHistory].slice(0, 12),
-      lastExport: {
-        format,
-        mode: exportOptions.mode || "ats",
-        exportedAt: new Date().toLocaleString("en-US")
-      },
-      auditEvents: appendAuditEvent(current, `Exported the current resume as ${extension.toUpperCase()}.`)
-    }));
   }
 
   async function copyCurrentResumeSection() {
@@ -762,6 +859,7 @@ export function ProofFitProvider({ children }) {
 
   const value = {
     state,
+    activity,
     isHydratingAuth,
     supportsSupabaseAuth,
     isDemoMode: !supportsSupabaseAuth,

@@ -21,3 +21,5 @@ The fastest way for data professionals to create truthful, ATS-safe, job-specifi
 - Maintain a premium enterprise visual language while keeping functionality ahead of decorative UI
 - Preserve signed-in workflow state and version history across refreshes for each user
 - Keep clear separation between `Start new`, `Clear stored resume data`, and `Clear saved versions`
+- Evolve the product toward a premium SaaS for repeated job-search execution, not a one-off resume generator
+- Anchor future roadmap decisions to proof maps, recruiter readability, role memory, and job-search workflow retention

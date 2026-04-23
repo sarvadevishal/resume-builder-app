@@ -6,7 +6,7 @@ import { TailoringWorkspace } from "@/components/workspace/tailoring-workspace";
 import { useProofFitApp } from "@/components/providers/prooffit-provider";
 
 export default function WorkspacePage() {
-  const { state, generateTailoringSession } = useProofFitApp();
+  const { state, activity, generateTailoringSession } = useProofFitApp();
 
   return (
     <AppShell
@@ -29,8 +29,13 @@ export default function WorkspacePage() {
             <Link href="/job-analysis" className="button-secondary">
               Analyze job description
             </Link>
-            <button type="button" className="button-primary" onClick={generateTailoringSession}>
-              Generate now
+            <button
+              type="button"
+              className="button-primary"
+              onClick={generateTailoringSession}
+              disabled={activity.isGeneratingTailoringSession}
+            >
+              {activity.isGeneratingTailoringSession ? "Generating proof-backed suggestions..." : "Generate now"}
             </button>
           </div>
         </div>

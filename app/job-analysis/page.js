@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/app-shell";
 import { SectionCard } from "@/components/ui/section-card";
@@ -10,20 +10,27 @@ import { createEmptyJobDescriptionAnalysis } from "@/lib/prooffit-state";
 
 export default function JobAnalysisPage() {
   const router = useRouter();
-  const { state, analyzeJobDescription, generateTailoringSession } = useProofFitApp();
+  const { state, activity, analyzeJobDescription, generateTailoringSession } = useProofFitApp();
   const [jobDescriptionText, setJobDescriptionText] = useState(state.jobDescription.text);
   const [company, setCompany] = useState(state.jobDescription.company);
   const [role, setRole] = useState(state.jobDescription.role);
   const [error, setError] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const analysis = state.jobDescription.analysis || createEmptyJobDescriptionAnalysis();
+  const canAnalyze = Boolean(state.resumeUpload.structuredResume) && !activity.isGeneratingTailoringSession;
+  const canGenerate = Boolean(state.resumeUpload.structuredResume && state.jobDescription.analysis) && !activity.isAnalyzingJobDescription;
+  const hasReadySession = Boolean(state.tailoringSession);
+  const sessionSummary = useMemo(() => {
+    if (!state.tailoringSession) {
+      return "";
+    }
+
+    return `${state.tailoringSession.suggestions.length} proof-backed suggestions ready for ${state.tailoringSession.role || "this role"}.`;
+  }, [state.tailoringSession]);
 
   async function handleAnalyze() {
     setError("");
     setStatusMessage("");
-    setIsAnalyzing(true);
 
     try {
       await analyzeJobDescription({
@@ -34,23 +41,25 @@ export default function JobAnalysisPage() {
       setStatusMessage("Job description analyzed successfully. Review the extracted requirements, then generate the tailoring session.");
     } catch (analysisError) {
       setError(analysisError.message);
-    } finally {
-      setIsAnalyzing(false);
     }
   }
 
   async function handleGenerateSession() {
+    if (state.tailoringSession) {
+      router.push("/workspace");
+      return;
+    }
+
     setError("");
-    setStatusMessage("");
-    setIsGenerating(true);
+    setStatusMessage("Generating a proof-backed tailoring session grounded in your resume evidence.");
 
     try {
       await generateTailoringSession();
+      setStatusMessage("Tailoring session ready. Opening the workspace.");
       router.push("/workspace");
     } catch (generationError) {
       setError(generationError.message);
-    } finally {
-      setIsGenerating(false);
+      setStatusMessage("");
     }
   }
 
@@ -86,16 +95,28 @@ export default function JobAnalysisPage() {
 
         {error ? <p className="mt-4 rounded-2xl bg-[rgba(190,18,60,0.08)] px-4 py-3 text-sm font-semibold text-[var(--danger)]">{error}</p> : null}
         {statusMessage ? <p className="mt-4 rounded-2xl bg-[rgba(15,118,110,0.08)] px-4 py-3 text-sm font-semibold text-[var(--success)]">{statusMessage}</p> : null}
+        {hasReadySession && !activity.isGeneratingTailoringSession ? (
+          <p className="mt-4 rounded-2xl bg-[rgba(37,99,235,0.08)] px-4 py-3 text-sm font-semibold text-[var(--accent)]">{sessionSummary}</p>
+        ) : null}
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <button type="button" className="button-primary" onClick={handleAnalyze} disabled={isAnalyzing || !state.resumeUpload.structuredResume}>
-            {isAnalyzing ? "Analyzing..." : "Analyze JD"}
+          <button type="button" className="button-primary" onClick={handleAnalyze} disabled={!canAnalyze || activity.isAnalyzingJobDescription}>
+            {activity.isAnalyzingJobDescription ? "Analyzing JD..." : "Analyze JD"}
           </button>
-          <button type="button" className="button-secondary" onClick={handleGenerateSession} disabled={isGenerating || !state.jobDescription.analysis}>
-            {isGenerating ? "Generating..." : "Generate tailoring session"}
+          <button
+            type="button"
+            className={hasReadySession ? "button-primary" : "button-secondary"}
+            onClick={handleGenerateSession}
+            disabled={!canGenerate || activity.isGeneratingTailoringSession}
+          >
+            {activity.isGeneratingTailoringSession
+              ? "Generating proof-backed suggestions..."
+              : hasReadySession
+                ? "Open ready workspace"
+                : "Generate tailoring session"}
           </button>
-          <Link href="/workspace" className="button-secondary">
-            Open workspace
+          <Link href="/workspace" className={hasReadySession ? "button-secondary" : "button-secondary"}>
+            {hasReadySession ? "Review workspace" : "Open workspace"}
           </Link>
         </div>
       </SectionCard>

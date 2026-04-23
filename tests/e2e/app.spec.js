@@ -152,3 +152,36 @@ test("pasted resume text can be processed and cleared", async ({ page }) => {
   await page.getByRole("button", { name: "Clear current upload" }).click();
   await expect(page.getByText(/Upload a resume or paste text to see the structured preview here/i)).toBeVisible();
 });
+
+test("job analysis generate CTA recovers into a ready workspace state", async ({ page }) => {
+  await signIn(page, { email: "cta-user@prooffit.ai" });
+  await page.goto("/upload");
+
+  await page.getByLabel("Or paste resume text").fill([
+    "Jamie Builder",
+    "SUMMARY",
+    "Data engineer focused on SQL, Python, orchestration, and warehouse reliability.",
+    "EXPERIENCE",
+    "- Built Python and SQL ELT pipelines for weekly business reporting."
+  ].join("\n"));
+  await page.getByRole("button", { name: "Process resume" }).click();
+  await expect(page.getByText(/Deletion plan/i)).toBeVisible();
+
+  await page.goto("/job-analysis");
+  await page.getByLabel("Company").fill("Signal Works");
+  await page.getByLabel("Role").fill("Senior Data Engineer");
+  await page.getByLabel("Job description").fill([
+    "Senior Data Engineer",
+    "Must have SQL and Python",
+    "Own data pipeline reliability",
+    "Partner with analytics teams"
+  ].join("\n"));
+
+  await page.getByRole("button", { name: "Analyze JD" }).click();
+  await expect(page.getByText(/Job description analyzed successfully/i)).toBeVisible();
+  await page.getByRole("button", { name: "Generate tailoring session" }).click();
+  await expect(page.getByRole("heading", { name: "Tailoring workspace" })).toBeVisible();
+
+  await page.goto("/job-analysis");
+  await expect(page.getByRole("button", { name: "Open ready workspace" })).toBeVisible();
+});
