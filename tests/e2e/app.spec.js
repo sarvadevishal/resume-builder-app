@@ -1,5 +1,25 @@
 const { test, expect } = require("@playwright/test");
 const path = require("node:path");
+const { Document, Packer, Paragraph, TextRun } = require("docx");
+
+async function buildDocxResumeBuffer() {
+  const document = new Document({
+    sections: [
+      {
+        children: [
+          new Paragraph({ children: [new TextRun("Taylor Analyst")] }),
+          new Paragraph({ children: [new TextRun("SUMMARY")] }),
+          new Paragraph({ children: [new TextRun("Analytics engineer with SQL, dbt, and warehouse modeling experience.")] }),
+          new Paragraph({ children: [new TextRun("EXPERIENCE")] }),
+          new Paragraph({ children: [new TextRun("- Built dbt models and maintained Snowflake reporting layers.")] }),
+          new Paragraph({ children: [new TextRun("- Partnered with BI teams to improve metric reliability.")] })
+        ]
+      }
+    ]
+  });
+
+  return Packer.toBuffer(document);
+}
 
 async function signIn(page, options = {}) {
   await page.goto("/auth");
@@ -92,4 +112,43 @@ test("resume upload, JD analysis, workspace, export, settings, and history work 
 
   await page.getByRole("link", { name: /History/i }).first().click();
   await expect(page.getByRole("button", { name: "Restore" }).first()).toBeVisible();
+});
+
+test("DOCX upload processes successfully", async ({ page }) => {
+  await signIn(page, { email: "docx-user@prooffit.ai" });
+  await page.goto("/upload");
+
+  const fileChooserPromise = page.waitForEvent("filechooser");
+  await page.getByRole("button", { name: "Choose file" }).click();
+  const fileChooser = await fileChooserPromise;
+  await fileChooser.setFiles({
+    name: "resume.docx",
+    mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    buffer: await buildDocxResumeBuffer()
+  });
+
+  await page.getByRole("button", { name: "Process resume" }).click();
+  await expect(page.getByText(/Deletion plan/i)).toBeVisible();
+  await expect(page.getByText(/Summary/i).first()).toBeVisible();
+  await expect(page.getByText(/Experience/i).first()).toBeVisible();
+});
+
+test("pasted resume text can be processed and cleared", async ({ page }) => {
+  await signIn(page, { email: "text-user@prooffit.ai" });
+  await page.goto("/upload");
+
+  await page.getByLabel("Or paste resume text").fill([
+    "Morgan Builder",
+    "SUMMARY",
+    "Data engineer focused on SQL, Python, and warehouse reliability.",
+    "EXPERIENCE",
+    "- Built Python and SQL ELT pipelines for weekly finance reporting."
+  ].join("\n"));
+
+  await page.getByRole("button", { name: "Process resume" }).click();
+  await expect(page.getByText(/Deletion plan/i)).toBeVisible();
+  await expect(page.getByText(/Morgan Builder/i)).toBeVisible();
+
+  await page.getByRole("button", { name: "Clear current upload" }).click();
+  await expect(page.getByText(/Upload a resume or paste text to see the structured preview here/i)).toBeVisible();
 });

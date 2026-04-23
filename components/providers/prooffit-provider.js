@@ -491,15 +491,15 @@ export function ProofFitProvider({ children }) {
       throw new Error(await readErrorMessage(response, "Tailoring session generation failed."));
     }
 
-    const session = await response.json();
-    const normalizedSession = {
-      ...session,
-      suggestions: session.suggestions.map((suggestion) => ({
-        ...suggestion,
-        decision: suggestion.defaultDecision,
-        manualBullet: suggestion.suggestedBullet
-      }))
-    };
+      const session = await response.json();
+      const normalizedSession = {
+        ...session,
+        suggestions: (session.suggestions || []).map((suggestion) => ({
+          ...suggestion,
+          decision: suggestion.defaultDecision,
+          manualBullet: suggestion.suggestedBullet
+        }))
+      };
 
     setState((current) => ({
       ...current,

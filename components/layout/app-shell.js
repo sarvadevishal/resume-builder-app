@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import Link from "next/link";
+import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { appNavigation } from "@/lib/constants/navigation";
 import { getWorkflowStepState } from "@/lib/prooffit-state";
@@ -37,7 +38,7 @@ const orderedSteps = [
 export function AppShell({ children, title, description, fullWidth = false }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { state, startNewWorkflow } = useProofFitApp();
+  const { state, startNewWorkflow, isHydratingAuth } = useProofFitApp();
   const workflowState = getWorkflowStepState(state);
   const completedStepCount = orderedSteps.filter((step) => workflowState[step.key]).length;
   const allStepsComplete = completedStepCount === orderedSteps.length;
@@ -45,9 +46,33 @@ export function AppShell({ children, title, description, fullWidth = false }) {
   const progressPercent = Math.max(12, Math.round((completedStepCount / orderedSteps.length) * 100));
   const currentStep = orderedSteps[activeStepIndex];
 
+  useEffect(() => {
+    if (isHydratingAuth) {
+      return;
+    }
+
+    if (!state.currentUser?.email) {
+      router.replace(`/auth?next=${encodeURIComponent(pathname)}`);
+    }
+  }, [isHydratingAuth, pathname, router, state.currentUser?.email]);
+
   function handleStartNew() {
     startNewWorkflow();
     router.push("/upload");
+  }
+
+  if (isHydratingAuth || !state.currentUser?.email) {
+    return (
+      <div className={`${fullWidth ? "shell-width max-w-none" : "shell-width"} py-10`}>
+        <div className="premium-panel">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">ProofFit AI</p>
+          <h1 className="mt-3 text-3xl font-semibold sm:text-4xl">Securing your workspace</h1>
+          <p className="muted mt-3 max-w-2xl text-sm leading-7 sm:text-base">
+            We&apos;re checking your session and routing you to the right place.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

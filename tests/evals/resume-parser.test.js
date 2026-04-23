@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { PDFDocument, StandardFonts } from "pdf-lib";
+import fs from "node:fs/promises";
+import path from "node:path";
+import { Document, Packer, Paragraph, TextRun } from "docx";
 import { buildStructuredResume, extractResumeText } from "@/lib/services/resume-parser";
 
 describe("resume parser", () => {
@@ -34,18 +36,41 @@ describe("resume parser", () => {
   });
 
   it("extracts readable text from PDF uploads", async () => {
-    const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([300, 300]);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    page.drawText("Jane Analyst", { x: 32, y: 240, size: 18, font });
-    page.drawText("Built SQL dashboards", { x: 32, y: 210, size: 12, font });
-    const bytes = await pdfDoc.save();
+    const fixturePath = path.join(process.cwd(), "tests", "fixtures", "sample-resume.pdf");
+    const bytes = await fs.readFile(fixturePath);
     const file = new File([bytes], "resume.pdf", { type: "application/pdf" });
 
     const extractedText = await extractResumeText(file);
 
-    expect(extractedText).toContain("Jane Analyst");
-    expect(extractedText).toContain("Built SQL dashboards");
+    expect(extractedText).toContain("JANE DOE");
+    expect(extractedText).toContain("Built Python and SQL ELT pipelines");
+  });
+
+  it("extracts readable text from DOCX uploads", async () => {
+    const doc = new Document({
+      sections: [
+        {
+          children: [
+            new Paragraph({
+              children: [new TextRun("Jordan Engineer")]
+            }),
+            new Paragraph({
+              children: [new TextRun("Built dbt models for finance reporting")]
+            })
+          ]
+        }
+      ]
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+    const file = new File([buffer], "resume.docx", {
+      type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    });
+
+    const extractedText = await extractResumeText(file);
+
+    expect(extractedText).toContain("Jordan Engineer");
+    expect(extractedText).toContain("Built dbt models for finance reporting");
   });
 
   it("separates awards and publications instead of merging them into skills", () => {
