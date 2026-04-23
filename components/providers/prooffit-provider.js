@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   buildFinalStructuredResume,
   buildVersionFromSession,
@@ -206,8 +206,14 @@ export function ProofFitProvider({ children }) {
   const [state, setState] = useState(createDefaultState);
   const [isHydratingAuth, setIsHydratingAuth] = useState(true);
   const [activity, setActivity] = useState(defaultActivityState);
+  const generationRequestRef = useRef(null);
   const supabaseClient = useMemo(() => createSupabaseBrowserClient(), []);
   const supportsSupabaseAuth = Boolean(supabaseClient);
+
+  function resetActivityState() {
+    generationRequestRef.current = null;
+    setActivity(defaultActivityState);
+  }
 
   useEffect(() => {
     let isMounted = true;
@@ -302,6 +308,7 @@ export function ProofFitProvider({ children }) {
   }, [state, isHydratingAuth]);
 
   function resetWorkflowState(message, { preserveHistory = true } = {}) {
+    resetActivityState();
     setState((current) => ({
       ...current,
       ...createEmptyWorkflowState(),
@@ -401,6 +408,7 @@ export function ProofFitProvider({ children }) {
     }
 
     document.cookie = "prooffit_demo_session=; path=/; max-age=0; samesite=lax";
+    resetActivityState();
     setState((current) => ({
       ...createDefaultState(),
       authMessage: "Signed out successfully.",
@@ -535,58 +543,67 @@ export function ProofFitProvider({ children }) {
       throw new Error("Analyze the job description before generating a tailoring session.");
     }
 
+    if (generationRequestRef.current) {
+      return generationRequestRef.current;
+    }
+
     setActivity((current) => ({
       ...current,
       isGeneratingTailoringSession: true
     }));
 
-    try {
-      const response = await fetchWithRetry(
-        "/api/tailoring/sessions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
+    generationRequestRef.current = (async () => {
+      try {
+        const response = await fetchWithRetry(
+          "/api/tailoring/sessions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              structuredResume: state.resumeUpload.structuredResume,
+              jobDescriptionText: state.jobDescription.text,
+              company: state.jobDescription.company,
+              role: state.jobDescription.role
+            })
           },
-          body: JSON.stringify({
-            structuredResume: state.resumeUpload.structuredResume,
-            jobDescriptionText: state.jobDescription.text,
-            company: state.jobDescription.company,
-            role: state.jobDescription.role
-          })
-        },
-        {
-          timeoutMs: 45000
+          {
+            timeoutMs: 45000
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(await readErrorMessage(response, "Tailoring session generation failed."));
         }
-      );
 
-      if (!response.ok) {
-        throw new Error(await readErrorMessage(response, "Tailoring session generation failed."));
+        const session = await response.json();
+        const normalizedSession = {
+          ...session,
+          suggestions: (session.suggestions || []).map((suggestion) => ({
+            ...suggestion,
+            decision: suggestion.defaultDecision,
+            manualBullet: suggestion.suggestedBullet
+          }))
+        };
+
+        setState((current) => ({
+          ...current,
+          tailoringSession: normalizedSession,
+          auditEvents: appendAuditEvent(current, `Generated proof-backed suggestions for ${session.role} at ${session.company}.`)
+        }));
+
+        return normalizedSession;
+      } finally {
+        generationRequestRef.current = null;
+        setActivity((current) => ({
+          ...current,
+          isGeneratingTailoringSession: false
+        }));
       }
+    })();
 
-      const session = await response.json();
-      const normalizedSession = {
-        ...session,
-        suggestions: (session.suggestions || []).map((suggestion) => ({
-          ...suggestion,
-          decision: suggestion.defaultDecision,
-          manualBullet: suggestion.suggestedBullet
-        }))
-      };
-
-      setState((current) => ({
-        ...current,
-        tailoringSession: normalizedSession,
-        auditEvents: appendAuditEvent(current, `Generated proof-backed suggestions for ${session.role} at ${session.company}.`)
-      }));
-
-      return normalizedSession;
-    } finally {
-      setActivity((current) => ({
-        ...current,
-        isGeneratingTailoringSession: false
-      }));
-    }
+    return generationRequestRef.current;
   }
 
   function updateSuggestionDecision(id, decision) {
@@ -738,6 +755,7 @@ export function ProofFitProvider({ children }) {
   }
 
   async function clearResumeData() {
+    resetActivityState();
     const response = await fetchWithRetry("/api/privacy/delete", {
       method: "POST",
       headers: {

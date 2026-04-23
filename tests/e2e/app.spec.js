@@ -185,3 +185,39 @@ test("job analysis generate CTA recovers into a ready workspace state", async ({
   await page.goto("/job-analysis");
   await expect(page.getByRole("button", { name: "Open ready workspace" })).toBeVisible();
 });
+
+test("workspace tailor resume CTA only enables when prerequisites are ready", async ({ page }) => {
+  await signIn(page, { email: "workspace-user@prooffit.ai" });
+  await page.goto("/workspace");
+
+  await expect(page.getByRole("button", { name: "Tailor resume" })).toBeDisabled();
+  await expect(page.getByText(/Resume readiness/i)).toBeVisible();
+  await expect(page.getByText(/JD readiness/i)).toBeVisible();
+
+  await page.goto("/upload");
+  await page.getByLabel("Or paste resume text").fill([
+    "Riley Builder",
+    "SUMMARY",
+    "Data engineer focused on Python, SQL, and pipeline reliability.",
+    "EXPERIENCE",
+    "- Built reliable ELT workflows for weekly reporting."
+  ].join("\n"));
+  await page.getByRole("button", { name: "Process resume" }).click();
+  await expect(page.getByText(/Deletion plan/i)).toBeVisible();
+
+  await page.goto("/job-analysis");
+  await page.getByLabel("Company").fill("Northstar");
+  await page.getByLabel("Role").fill("Data Engineer");
+  await page.getByLabel("Job description").fill([
+    "Data Engineer",
+    "Must have Python and SQL",
+    "Own pipeline reliability"
+  ].join("\n"));
+  await page.getByRole("button", { name: "Analyze JD" }).click();
+  await expect(page.getByText(/Job description analyzed successfully/i)).toBeVisible();
+
+  await page.goto("/workspace");
+  await expect(page.getByRole("button", { name: "Tailor resume" })).toBeEnabled();
+  await page.getByRole("button", { name: "Tailor resume" }).click();
+  await expect(page.getByRole("heading", { name: "Tailoring workspace" })).toBeVisible();
+});
